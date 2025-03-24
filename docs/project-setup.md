@@ -17,13 +17,13 @@
 - dotnet build
 - dotnet run
 
-# Run tests
-> from CRM.Tests
-- dotnet test
-
 # Set up test
 - dotnet new xunit -o CRM.Tests
 - cd CRM.Tests
 - dotnet add reference ../CRM/CRM.csproj
 - dotnet add package xunit
 - dotnet add package Microsoft.NET.Test.Sdk
+
+# Run tests
+> from CRM.Tests
+- dotnet test

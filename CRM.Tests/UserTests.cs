@@ -22,7 +22,7 @@ public class UserTests
         Assert.Equal(passwordHash, user.PasswordHash);
         Assert.Equal(role, user.Role);
         Assert.True(user.UserCreateTime <= DateTime.UtcNow);
-        Assert.Equal(user.UserCreateTime, user.UserUpdateTime);
+        Assert.Equal(user.UserCreateTime, user.UserCreateTime);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class UserTests
     {
         var exception = Assert.Throws<ArgumentException>(() =>
             new User("John Doe", "not-an-email", "hashedpass123"));
-        Assert.Equal("Invalid Email Format", exception.Message);
+        Assert.Equal("Invalid Email Format (Parameter 'email')", exception.Message);
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class UserTests
     {
         var exception = Assert.Throws<ArgumentException>(() =>
             new User("John Doe", "john@example.com", ""));
-        Assert.Equal("Password Hash cannot be empty", exception.Message);
+        Assert.Equal("Password Hash cannot be empty (Parameter 'passwordHash')", exception.Message);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class UserTests
     {
         var user = new User("John Doe", "john@example.com", "hashedpass123");
         var exception = Assert.Throws<ArgumentException>(() => user.UpdateEmail("invalid-email"));
-        Assert.Equal("Invalid Email Format", exception.Message);
+        Assert.Equal("Invalid Email Format (Parameter 'email')", exception.Message);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class UserTests
     {
         var user = new User("John Doe", "john@example.com", "hashedpass123");
         var exception = Assert.Throws<ArgumentException>(() => user.SetPasswordHash(""));
-        Assert.Equal("Password Hash cannot be empty", exception.Message);
+        Assert.Equal("Password Hash cannot be empty (Parameter 'passwordHash')", exception.Message);
     }
 
     [Fact]

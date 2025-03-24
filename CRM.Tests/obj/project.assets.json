@@ -1430,11 +1430,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "projectUniqueName": "/home/anoliveira/projects/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
       "projectName": "CRM.Tests",
-      "projectPath": "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "projectPath": "/home/anoliveira/projects/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
       "packagesPath": "/home/anoliveira/.nuget/packages/",
-      "outputPath": "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM.Tests/obj/",
+      "outputPath": "/home/anoliveira/projects/dev-academy-CRM/CRM.Tests/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/anoliveira/.nuget/NuGet/NuGet.Config"
@@ -1443,14 +1443,15 @@
         "net8.0"
       ],
       "sources": {
+        "/usr/lib/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM/CRM.csproj": {
-              "projectPath": "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM/CRM.csproj"
+            "/home/anoliveira/projects/dev-academy-CRM/CRM/CRM.csproj": {
+              "projectPath": "/home/anoliveira/projects/dev-academy-CRM/CRM/CRM.csproj"
             }
           }
         }
@@ -1459,7 +1460,13 @@
         "warnAsError": [
           "NU1605"
         ]
-      }
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -1502,7 +1509,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.112/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/9.0.104/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -50,6 +50,7 @@ public sealed class User : Entity // Sealed to prevent inheritance
         }
 
         PasswordHash = passwordHash;
+        UserUpdateTime = DateTime.UtcNow;
     }
 
     private void UpdateTimeStamp() => UserUpdateTime = DateTime.UtcNow;

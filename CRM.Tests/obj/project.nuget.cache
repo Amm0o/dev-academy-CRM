@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "54Vbdk8FucQQuKWlNEPin+lAqkazEpM2raEqeGP3gSm7Bq+XMuWUQ/Vrwqr1i+TSRRRBZXrvOo9sryqjq8YH0Q==",
+  "dgSpecHash": "2R+HW/kujk0=",
   "success": true,
-  "projectFilePath": "/home/anoliveira/projects/dev-academy/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+  "projectFilePath": "/home/anoliveira/projects/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
   "expectedPackageFiles": [
     "/home/anoliveira/.nuget/packages/coverlet.collector/6.0.0/coverlet.collector.6.0.0.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/microsoft.aspnetcore.openapi/8.0.12/microsoft.aspnetcore.openapi.8.0.12.nupkg.sha512",
