@@ -1,7 +1,7 @@
 using CRM.Models;
 using Xunit;
 
-namespace CRM.Tests;
+namespace CRM.Tests.ModelsTests;
 
 public class UserTests
 {
