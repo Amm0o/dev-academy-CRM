@@ -10,9 +10,9 @@ public enum UserRole
 
 public sealed class User : Entity // Sealed to prevent inheritance
 {
-    private string _name;
-    private string _passwordHash;
-    private string _email;
+    private string _name = string.Empty;
+    private string _passwordHash = string.Empty;
+    private string _email = string.Empty;
     private UserRole _role = UserRole.Regular;
 
     [Required(ErrorMessage = "Name is required")]
