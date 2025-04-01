@@ -16,20 +16,21 @@ public class OrderItemsTests
     public void Constructor_ValidData_InitializesCorrectly()
     {
         // Arrange
-        var productQuantities = new List<OrderItem.ProductQuantity>
+        var initialProductQuantities = new List<OrderItem.ProductQuantity>
         {
-            new OrderItem.ProductQuantity(ValidProductId, ValidQuantity)
+            new OrderItem.ProductQuantity(ValidProductId, ValidQuantity) // Ensure at least one valid product-quantity pair
         };
+        var orderItem = new OrderItem(ValidOrderId, initialProductQuantities);
+        int newProductId = 45678;
+        int newQuantity = 10;
 
         // Act
-        var orderItem = new OrderItem(ValidOrderId, productQuantities);
+        orderItem.AddProduct(newProductId, newQuantity);
 
         // Assert
-        Assert.Equal(ValidOrderId, orderItem.OrderId);
-        Assert.Equal(productQuantities, orderItem.ProductQuantities);
-        Assert.Single(orderItem.ProductQuantities); // Ensures one item
-        Assert.Equal(ValidProductId, orderItem.ProductQuantities[0].ProductId);
-        Assert.Equal(ValidQuantity, orderItem.ProductQuantities[0].Quantity);
+        Assert.Equal(2, orderItem.ProductQuantities.Count); // Ensures two items
+        Assert.Equal(newProductId, orderItem.ProductQuantities[1].ProductId);
+        Assert.Equal(newQuantity, orderItem.ProductQuantities[1].Quantity);
     }
 
     [Fact]
@@ -43,7 +44,7 @@ public class OrderItemsTests
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new OrderItem(-1, productQuantities));
-        Assert.Equal("Order ID must be a positive number", exception.Message);
+        Assert.Equal("Order ID must be a positive number (Parameter 'orderId')", exception.Message);
         Assert.Equal("orderId", exception.ParamName);
     }
 
@@ -52,7 +53,7 @@ public class OrderItemsTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new OrderItem(ValidOrderId, null));
-        Assert.Equal("At least one product quantity must be specified", exception.Message);
+        Assert.Equal("Quantity must be a positive number > 0 (Parameter 'productQuantities')", exception.Message);
         Assert.Equal("productQuantities", exception.ParamName);
     }
 
@@ -64,7 +65,7 @@ public class OrderItemsTests
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new OrderItem(ValidOrderId, emptyProductQuantities));
-        Assert.Equal("At least one product quantity must be specified (Parameter 'productQuantities')", exception.Message);
+        Assert.Equal("Quantity must be a positive number > 0 (Parameter 'productQuantities')", exception.Message);
         Assert.Equal("productQuantities", exception.ParamName);
     }
 
@@ -84,7 +85,11 @@ public class OrderItemsTests
     public void AddProduct_ValidData_AddsToList()
     {
         // Arrange
-        var orderItem = new OrderItem(ValidOrderId, new List<OrderItem.ProductQuantity>());
+        var initialProductQuantities = new List<OrderItem.ProductQuantity>
+        {
+            new OrderItem.ProductQuantity(ValidProductId, ValidQuantity)
+        };
+        var orderItem = new OrderItem(ValidOrderId, initialProductQuantities);
         int newProductId = 45678;
         int newQuantity = 10;
 
@@ -92,9 +97,9 @@ public class OrderItemsTests
         orderItem.AddProduct(newProductId, newQuantity);
 
         // Assert
-        Assert.Single(orderItem.ProductQuantities);
-        Assert.Equal(newProductId, orderItem.ProductQuantities[0].ProductId);
-        Assert.Equal(newQuantity, orderItem.ProductQuantities[0].Quantity);
+        Assert.Equal(2, orderItem.ProductQuantities.Count); // Now expecting 2 items
+        Assert.Equal(newProductId, orderItem.ProductQuantities[1].ProductId);
+        Assert.Equal(newQuantity, orderItem.ProductQuantities[1].Quantity);
     }
 
     [Fact]
@@ -102,7 +107,7 @@ public class OrderItemsTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new OrderItem.ProductQuantity(-1, ValidQuantity));
-        Assert.Equal("Product ID must be a positive number", exception.Message);
+        Assert.Equal("Product ID must be a positive number (Parameter 'productId')", exception.Message);
         Assert.Equal("productId", exception.ParamName);
     }
 
@@ -111,7 +116,7 @@ public class OrderItemsTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => new OrderItem.ProductQuantity(ValidProductId, -1));
-        Assert.Equal("Quantity must be a positive number", exception.Message);
+        Assert.Equal("Quantity must be a positive number > 0 (Parameter 'quantity')", exception.Message);
         Assert.Equal("quantity", exception.ParamName);
     }
 

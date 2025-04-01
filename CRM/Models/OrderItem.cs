@@ -23,7 +23,7 @@ public class OrderItem : Entity
         if (orderId <= 0)
             throw new ArgumentException("Order ID must be a positive number", nameof(orderId));
         if (productQuantities == null || productQuantities.Count == 0)
-            throw new ArgumentException("At least one product quantity must be specified", nameof(productQuantities));
+            throw new ArgumentException("Quantity must be a positive number > 0", nameof(productQuantities));
 
         OrderId = orderId;
         ProductQuantities = productQuantities;
@@ -47,7 +47,7 @@ public class OrderItem : Entity
         public int ProductId { get; set; }
 
         [Required(ErrorMessage = "Quantity is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "At least one product quantity must be specified")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be a positive number > 0")]
         public int Quantity { get; set; }
 
         public ProductQuantity(int productId, int quantity)
@@ -55,7 +55,7 @@ public class OrderItem : Entity
             if (productId <= 0)
                 throw new ArgumentException("Product ID must be a positive number", nameof(productId));
             if (quantity <= 0)
-                throw new ArgumentException("At least one product quantity must be specified", nameof(quantity));
+                throw new ArgumentException("Quantity must be a positive number > 0", nameof(quantity));
 
             ProductId = productId;
             Quantity = quantity;
