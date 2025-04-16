@@ -6,6 +6,11 @@ SA_PASSWORD="YourStrong@Passw0rd123!"  # Updated to meet complexity requirements
 DB_NAME="CRM"
 PORT="1433"
 
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the db setup script as root"
+    exit 1
+fi
+
 # Step 1: Check if Docker is installed, install if not (Ubuntu/Debian assumed)
 if ! [ -x "$(command -v docker)" ]; then
     echo "Docker not found. Installing Docker..."

@@ -249,3 +249,12 @@ class Program
 This MD file provides a concise, reusable reference for connecting to your DB in C#. Let me know if you’d like adjustments!
 
 
+# Default credentials:
+Connection details:
+  Host: localhost
+  Port: 1433
+  Database: CRM
+  Username: SA
+  Password: YourStrong@Passw0rd123!
+
+
