@@ -2350,19 +2350,19 @@
     ]
   },
   "packageFolders": {
-    "/home/anoliveira/.nuget/packages/": {}
+    "/root/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM/CRM.csproj",
+      "projectUniqueName": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
       "projectName": "CRM",
-      "projectPath": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM/CRM.csproj",
-      "packagesPath": "/home/anoliveira/.nuget/packages/",
-      "outputPath": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM/obj/",
+      "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+      "packagesPath": "/root/.nuget/packages/",
+      "outputPath": "/root/repos/dev-academy-CRM/CRM/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/anoliveira/.nuget/NuGet/NuGet.Config"
+        "/root/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -2380,11 +2380,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -2423,6 +2418,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.15, 8.0.15]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -2431,7 +2432,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.408/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.115/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

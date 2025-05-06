@@ -3293,19 +3293,19 @@
     ]
   },
   "packageFolders": {
-    "/home/anoliveira/.nuget/packages/": {}
+    "/root/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "projectUniqueName": "/root/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
       "projectName": "CRM.Tests",
-      "projectPath": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
-      "packagesPath": "/home/anoliveira/.nuget/packages/",
-      "outputPath": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM.Tests/obj/",
+      "projectPath": "/root/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "packagesPath": "/root/.nuget/packages/",
+      "outputPath": "/root/repos/dev-academy-CRM/CRM.Tests/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/anoliveira/.nuget/NuGet/NuGet.Config"
+        "/root/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -3317,8 +3317,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM/CRM.csproj": {
-              "projectPath": "/home/anoliveira/Documents/repos/dev-academy-CRM/CRM/CRM.csproj"
+            "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
+              "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj"
             }
           }
         }
@@ -3327,11 +3327,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -3370,12 +3365,18 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.15, 8.0.15]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.408/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.115/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

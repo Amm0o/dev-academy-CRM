@@ -1,12 +1,11 @@
 {
   "Version": 1,
-  "Hash": "FkfvXnfGfC7cJ9jey2/FFenV8zk2aGZHnf2Ks9AIY5g=",
+  "Hash": "+K51c5hvH7Awxu3p7sSUvOhBCnY0uPyhfcPEaw/chLY=",
   "Source": "CRM",
   "BasePath": "_content/CRM",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
   "DiscoveryPatterns": [],
-  "Assets": [],
-  "Endpoints": []
+  "Assets": []
 }
