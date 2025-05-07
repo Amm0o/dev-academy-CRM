@@ -45,6 +45,7 @@ install_dotnet() {
     echo "Installing .Net 8.0"
     # Intall the .Net SDK
     pacman -S dotnet-sdk-8.0
+    sudo pacman -S aspnet-runtime-8.0
     check_if_installed ".Net 8.0"
 
 }

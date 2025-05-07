@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {}
+    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {}
   },
   "projects": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
+    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "projectUniqueName": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
         "projectName": "CRM",
-        "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/root/repos/dev-academy-CRM/CRM/obj/",
+        "projectPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "packagesPath": "/home/anoliveira/.nuget/packages/",
+        "outputPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "/home/anoliveira/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -46,9 +46,21 @@
               "target": "Package",
               "version": "[6.0.1, )"
             },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[9.0.4, )"
+            },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.4, )"
+            },
             "Microsoft.Extensions.Logging": {
               "target": "Package",
               "version": "[9.0.4, )"
+            },
+            "Serilog.Extensions.Logging.File": {
+              "target": "Package",
+              "version": "[3.0.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
