@@ -64,14 +64,17 @@ fi
 # Step 7: Install sqlcmd (Arch Linux way)
 if ! [ -x "$(command -v sqlcmd)" ]; then
     echo "Installing mssql-tools (sqlcmd)..."
-    
-    # Create a non-root user for building AUR packages
-    useradd -m aurbuilder
-    # Set password for aurbuilder (secure method)
-    echo "aurbuilder:password123" | chpasswd
+
+    mkdir -p /tmp/aur_build && cd /tmp/aur_build
+    git clone https://aur.archlinux.org/msodbcsql.git
+    chown -R anoliveira:anoliveira /tmp/aur_build
+    cd msodbcsql
+    sudo -u anoliveira makepkg
+
+    # Install the built package
+    sudo pacman -U --noconfirm msodbcsql-*.pkg.tar.zst
     
     # Create build directory and set permissions
-    mkdir -p /tmp/aur_build
     chmod 777 /tmp/aur_build
     cd /tmp/aur_build
     
@@ -80,11 +83,11 @@ if ! [ -x "$(command -v sqlcmd)" ]; then
     
     # Clone the mssql-tools AUR package
     git clone https://aur.archlinux.org/mssql-tools.git
-    chown -R aurbuilder:aurbuilder /tmp/aur_build
+    chown -R anoliveira:anoliveira /tmp/aur_build
     
     # Build and install the package as non-root user
     cd mssql-tools
-    sudo -u aurbuilder makepkg -s
+    sudo -u anoliveira makepkg -s
     
     # Install the built package
     pacman -U --noconfirm mssql-tools-*.pkg.tar.zst
@@ -96,15 +99,14 @@ if ! [ -x "$(command -v sqlcmd)" ]; then
     # Cleanup
     cd /
     rm -rf /tmp/aur_build
-    userdel -r aurbuilder
 else
     echo "sqlcmd is already installed."
 fi
 
 # Step 8: Create the CRM database and tables
 echo "Setting up the CRM database and tables..."
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -Q "CREATE DATABASE $DB_NAME"
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -d $DB_NAME -Q "
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -Q "CREATE DATABASE $DB_NAME"
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
     CREATE TABLE Customers (
         CustomerID INT PRIMARY KEY IDENTITY(1,1),
         FirstName NVARCHAR(50),
@@ -126,8 +128,8 @@ sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -d $DB_NAME -Q "
 
 # Step 9: Verify the setup
 echo "Verifying the setup..."
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -d $DB_NAME -Q "SELECT * FROM Customers"
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -d $DB_NAME -Q "SELECT * FROM TestTable"
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "SELECT * FROM Customers"
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "SELECT * FROM TestTable"
 if [ $? -ne 0 ]; then
     echo "Error: Failed to verify the setup. Check the database connection."
     exit 1
@@ -135,7 +137,7 @@ fi
 echo "Setup verified successfully!"
 # Clean up test table
 echo "Cleaning up test table..."
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -d $DB_NAME -Q "DROP TABLE TestTable"
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "DROP TABLE TestTable"
 
 # Step 10: Display connection details
 echo "Setup complete! Your SQL Server is running in a Docker container."

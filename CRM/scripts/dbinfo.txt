@@ -1,0 +1,9 @@
+Connection details:
+  Host: localhost
+  Port: 1433
+  Database: CRM
+  Username: SA
+  Password: YourStrong@Passw0rd123!
+To connect from your CRM app, use: Server=localhost,1433;Database=CRM;User Id=SA;Password=YourStrong@Passw0rd123!;
+To stop the container: docker stop crm_sql_server
+To start it again later: docker start crm_sql_server
