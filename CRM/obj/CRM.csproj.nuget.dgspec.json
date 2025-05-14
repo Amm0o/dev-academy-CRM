@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {}
+    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {}
   },
   "projects": {
-    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {
+    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "projectUniqueName": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
         "projectName": "CRM",
-        "projectPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
-        "packagesPath": "/home/anoliveira/.nuget/packages/",
-        "outputPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/obj/",
+        "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "packagesPath": "/root/.nuget/packages/",
+        "outputPath": "/root/repos/dev-academy-CRM/CRM/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/anoliveira/.nuget/NuGet/NuGet.Config"
+          "/root/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
