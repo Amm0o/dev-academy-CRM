@@ -58,9 +58,11 @@ class CRMMain
             builder.Services.AddSingleton<DatabaseCreation>(sp => {
                 var dbAccess = sp.GetRequiredService<DatabaseAccess>();
                 var logger = sp.GetRequiredService<ILogger<DatabaseCreation>>();
-
                 return new DatabaseCreation(dbAccess, logger);
             });
+
+            // Add service for basic CRUD activities
+            builder.Services.AddSingleton<BasicCrud>();
 
             // Build the application
             var app = builder.Build();
