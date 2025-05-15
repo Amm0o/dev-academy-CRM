@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {}
+    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {}
   },
   "projects": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
+    "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "projectUniqueName": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
         "projectName": "CRM",
-        "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "projectPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
         "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/root/repos/dev-academy-CRM/CRM/obj/",
+        "outputPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/root/.nuget/NuGet/NuGet.Config"

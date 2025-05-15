@@ -54,11 +54,49 @@ class CRMMain
                 return new DatabaseAccess(connectionString, logger);
             });
 
+            // Register DB Creation 
+            builder.Services.AddSingleton<DatabaseCreation>(sp => {
+                var dbAccess = sp.GetRequiredService<DatabaseAccess>();
+                var logger = sp.GetRequiredService<ILogger<DatabaseCreation>>();
+
+                return new DatabaseCreation(dbAccess, logger);
+            });
+
             // Build the application
             var app = builder.Build();
 
             // Get logger from application services - use CRMMain as the category
             var logger = app.Services.GetRequiredService<ILogger<CRMMain>>();
+
+
+            // Initialize DB and it's tables
+
+            try {
+                logger.LogInformation("Initializing DBs and it's tables...");
+
+                var dbCreation = app.Services.GetRequiredService<DatabaseCreation>();
+
+                // Get database name from configuration
+                string dbName = configuration.GetValue<string>("ConnectionString:DatabaseName") ?? "CRM";
+
+                // Create databse and table
+                var dbCreated = dbCreation.CreateDatabaseIfNotExist(dbName);
+                if (dbCreated) {
+                    logger.LogInformation("Database created initiating table creation");
+
+                    bool tablesCreated = dbCreation.CreateTablesIfNotExist(dbName);
+
+                    if (tablesCreated)
+                        logger.LogInformation("Tables created");
+                    else 
+                        logger.LogError("Failed to created the tables");
+                } else {
+                    logger.LogError("Failed to create db");
+                }
+
+            } catch (Exception ex) {
+                logger.LogCritical(ex, "Failed to created db and it's tables");
+            }
             
             // Force log a test message at all levels
             // logger.LogTrace("Trace message - should only appear if trace logging enabled");

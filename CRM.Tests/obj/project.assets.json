@@ -4761,11 +4761,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/root/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "projectUniqueName": "/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
       "projectName": "CRM.Tests",
-      "projectPath": "/root/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
+      "projectPath": "/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/CRM.Tests.csproj",
       "packagesPath": "/root/.nuget/packages/",
-      "outputPath": "/root/repos/dev-academy-CRM/CRM.Tests/obj/",
+      "outputPath": "/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/root/.nuget/NuGet/NuGet.Config"
@@ -4780,8 +4780,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
-              "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj"
+            "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj": {
+              "projectPath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj"
             }
           }
         }

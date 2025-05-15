@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LmNosw5GrPqH/NZLAfNYj5oyTu5LnQQgjfJS3PmpXeSsUIRrgwC94/YtezOtgxxAPJBFqBUDYfwQ10EUz726LQ==",
+  "dgSpecHash": "m1dAdwAaoKFAJTpZMGhO1zkHDxVF3wol2d2sKBW6LQl1LnXsBI0h1HxPf6BxaRwo+rPakbgv7VRA7n28b/0HuA==",
   "success": true,
-  "projectFilePath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+  "projectFilePath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
   "expectedPackageFiles": [
     "/root/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/root/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
