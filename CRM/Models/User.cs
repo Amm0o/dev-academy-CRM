@@ -11,7 +11,7 @@ public enum UserRole
 public sealed class User : Entity // Sealed to prevent inheritance
 {
     private string _name = string.Empty;
-    private string _passwordHash = string.Empty;
+    private string _password = string.Empty;
     private string _email = string.Empty;
     private UserRole _role = UserRole.Regular;
 
@@ -24,7 +24,7 @@ public sealed class User : Entity // Sealed to prevent inheritance
     public string Email { get => _email; private set => _email = value; }
 
     [Required(ErrorMessage = "Password hash is required")]
-    public string PasswordHash { get => _passwordHash; private set => _passwordHash = value; }
+    public string Password { get => _password; private set => _password = value; }
 
     public UserRole Role { get => _role; private set => _role = value; }
 
@@ -32,24 +32,24 @@ public sealed class User : Entity // Sealed to prevent inheritance
     public DateTime UserUpdateTime { get; private set; }
 
     // Constructor for validation and encapsulation
-    public User(string name, string email, string passwordHash, UserRole role = UserRole.Regular)
+    public User(string name, string email, string password, UserRole role = UserRole.Regular)
     {
         UserCreateTime = DateTime.UtcNow;
         UserUpdateTime = UserCreateTime;
         UpdateName(name);
         UpdateEmail(email);
-        SetPasswordHash(passwordHash);
+        SetPasswordHash(password);
         UpdateRole(role);
     }
 
-    public void SetPasswordHash(string passwordHash)
+    public void SetPasswordHash(string password)
     {
-        if (string.IsNullOrWhiteSpace(passwordHash))
+        if (string.IsNullOrWhiteSpace(password))
         {
-            throw new ArgumentException("Password Hash cannot be empty", nameof(passwordHash));
+            throw new ArgumentException("Password Hash cannot be empty", nameof(password));
         }
 
-        PasswordHash = passwordHash;
+        Password = password;
         UserUpdateTime = DateTime.UtcNow;
     }
 

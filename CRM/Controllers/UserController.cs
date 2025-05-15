@@ -25,10 +25,16 @@ namespace CRM.Controllers {
             _basicCrud = basicCrud;
         }
 
+    public class UserRegistrationRequest
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; } // Plain password from client
+    }
 
-        [HttpPost("register")] 
-        public IActionResult RegisterUser([FromBody] User user)
-        {
+    [HttpPost("register")] 
+    public IActionResult RegisterUser([FromBody] UserRegistrationRequest request)
+    {
             // Example post request
             // {
             //     "name": "John Doe",
@@ -37,15 +43,15 @@ namespace CRM.Controllers {
             // }
             try {
 
-                // Validate User input 
-                if (string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email) || string.IsNullOrWhiteSpace(user.PasswordHash)) {
-
+                // Validate
+                if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email) || 
+                    string.IsNullOrWhiteSpace(request.Password)) {
                     return BadRequest("User name email and password must not be empty");
                 }
 
                 // Check if email already exists in DB
-                if (_basicCrud.CheckIfValueExists(user.Email)) {
-                    _logger?.LogInformation("User emails {email} was already registered", user.Email);
+                if (_basicCrud.CheckIfValueExists(request.Email)) {
+                    _logger?.LogInformation("User emails {email} was already registered", request.Email);
                     return Conflict("User email was already registered");
                 }
 
@@ -53,7 +59,9 @@ namespace CRM.Controllers {
                 // Proceed with saving the user since the user is not present in the DB
 
                 // Hash password
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                        // Create User object with hashed password
+                var user = new User(request.Name, request.Email, hashedPassword);
 
                 // Insert into DB
                 // Insert user into database
@@ -84,7 +92,7 @@ namespace CRM.Controllers {
                 return CreatedAtAction(nameof(GetUserById), new {id = userId}, createdUser);
 
             } catch (Exception ex) {
-                _logger.LogError(ex, "Error registering user: {Email}", user.Email);
+                _logger.LogError(ex, "Error registering user: {Email}", request.Email);
                 return StatusCode(500, "An error occurred while registering the user");
             }
         }
