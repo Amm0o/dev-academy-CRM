@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
-using CRM.Infra;
-
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace CRM.Infra
 {
@@ -8,22 +8,19 @@ namespace CRM.Infra
         private readonly DatabaseAccess _dbAccess;
         private readonly ILogger<DatabaseCreation> _logger;
 
-
         // Constructor Method
-        public DatabaseCreation (DatabaseAccess dbAccess, ILogger<DatabaseCreation> logger = null) {
-
+        public DatabaseCreation(DatabaseAccess dbAccess, ILogger<DatabaseCreation> logger = null) {
             _dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
             _logger = logger;
         }
 
         private bool CheckIfDbExists(string dbName) {
-
             var dbExists = _dbAccess.ExecuteScalar<int>(
                     "SELECT COUNT(*) FROM sys.databases WHERE name = @dbName",
                     new SqlParameter("@dbName", dbName)
             );
 
-            return dbExists > 0 ? true : false;
+            return dbExists > 0;
         }
 
         public bool CreateDatabaseIfNotExist(string databaseName) {
@@ -39,7 +36,6 @@ namespace CRM.Infra
                 } 
 
                 // Create Database
-
                 _logger?.LogInformation("Database: {DatabaseName} did not exist proceeding with creation!", databaseName);
                 _dbAccess.ExecuteNonQuery($"CREATE DATABASE {databaseName}");
                 
@@ -56,16 +52,13 @@ namespace CRM.Infra
             }
         }
 
-
         public bool CreateTablesIfNotExist(string databaseName) {
             _logger?.LogInformation("Creating tables if they don't exist in db: {DatabaseName}", databaseName);
 
             try {
-
                 // Switch context to the correct db
                 _dbAccess.ExecuteNonQuery($"USE {databaseName}");
                 
-
                 // Create Customers table
                 _dbAccess.ExecuteNonQuery(@"
                     IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Customers')
@@ -95,28 +88,37 @@ namespace CRM.Infra
                             Category NVARCHAR(50),
                             Price DECIMAL(18,2) NOT NULL,
                             Stock INT NOT NULL DEFAULT 0,
+                            ProductGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
                             CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
                             UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
                         );
                     END
                 ");
                 
-                // Create Orders table
+                // Create Orders table - Updated to match new Order model
                 _dbAccess.ExecuteNonQuery(@"
                     IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Orders')
                     BEGIN
                         CREATE TABLE Orders (
                             OrderId INT PRIMARY KEY IDENTITY(1,1),
+                            OrderGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
                             CustomerId INT NOT NULL,
+                            UserNameOrder NVARCHAR(100) NOT NULL,
+                            OrderDescription NVARCHAR(500),
                             OrderDate DATETIME2 NOT NULL DEFAULT GETDATE(),
                             Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
-                            TotalAmount DECIMAL(18,2) NOT NULL,
-                            CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId)
+                            TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) 
+                                REFERENCES Customers(CustomerId)
                         );
+                        
+                        CREATE INDEX IX_Orders_OrderGuid ON Orders(OrderGuid);
                     END
                 ");
                 
-                // Create OrderItems table for order details
+                // Create OrderItems table - Already matches the OrderItem model
                 _dbAccess.ExecuteNonQuery(@"
                     IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'OrderItems')
                     BEGIN
@@ -126,8 +128,11 @@ namespace CRM.Infra
                             ProductId INT NOT NULL,
                             Quantity INT NOT NULL,
                             UnitPrice DECIMAL(18,2) NOT NULL,
-                            CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) REFERENCES Orders(OrderId),
-                            CONSTRAINT FK_OrderItems_Products FOREIGN KEY (ProductId) REFERENCES Products(ProductId)
+                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) 
+                                REFERENCES Orders(OrderId),
+                            CONSTRAINT FK_OrderItems_Products FOREIGN KEY (ProductId) 
+                                REFERENCES Products(ProductId)
                         );
                     END
                 ");
@@ -136,8 +141,7 @@ namespace CRM.Infra
                 return true;
 
             } catch (Exception ex) {
-
-                _logger?.LogError("There was a problem with creation tables for {DatabaseName}.", databaseName);
+                _logger?.LogError(ex, "There was a problem with creation tables for {DatabaseName}.", databaseName);
                 return false;                
             }
         }

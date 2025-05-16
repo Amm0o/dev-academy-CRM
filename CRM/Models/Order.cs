@@ -5,47 +5,108 @@ namespace CRM.Models;
 
 public sealed class Order : Entity
 {
-    [Required(ErrorMessage = "An order needs to be associated with a user that ordered")]
-    [StringLength(100, MinimumLength = 3, ErrorMessage = "The UserNameOrder must be at 3 chars")]
+    // Base order properties
+    [Required(ErrorMessage = "An order needs to be associated with a customer")]
+    public int CustomerId { get; set; }
+    
+    [Required(ErrorMessage = "Username of the person ordering is required")]
+    [StringLength(100, MinimumLength = 3, ErrorMessage = "The UserNameOrder must be at least 3 chars")]
     public required string UserNameOrder { get; set; }
 
     [StringLength(500)]
-    public string OrderDescription { get; set; }
+    public string OrderDescription { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "A product needs a quantity that's >= 0")]
-    [Range(0, int.MaxValue, ErrorMessage = "The product quantity needs to be >= 0 and < int64")]
-    public required int StockQuantity { get; set; }
+    [Required]
+    public DateTime OrderDate { get; private set; } = DateTime.UtcNow;
+    
+    [Required]
+    [StringLength(20)]
+    public string Status { get; set; } = "Pending";
 
-    [Required(ErrorMessage = "A product needs a category")]
-    [StringLength(100, MinimumLength = 3)]
-    public required string ProductCategory { get; set; }
+    // External reference ID (GUID)
+    [Required(ErrorMessage = "An order needs a valid GUID")]
+    public Guid OrderGuid { get; private set; } = Guid.NewGuid();
 
-    public DateTime OrderDate { get; private set; }
+    // Order items collection
+    private readonly List<OrderItem> _items = new();
+    public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
+    // Calculated properties
+    [Required]
+    public decimal TotalAmount => _items.Sum(item => item.LineTotal);
+
+    // Constructors
+    public Order() { } // For ORM/serialization
+    
     [SetsRequiredMembers]
-    public Order(string userNameOrder, string orderDescription, int stockQuantity, string productCategory)
+    public Order(string userNameOrder, int customerId, string orderDescription = "", Guid? orderGuid = null)
     {
         if (string.IsNullOrWhiteSpace(userNameOrder) || userNameOrder.Length < 3)
         {
             throw new ArgumentException("The UserNameOrder must be at least 3 characters long.", nameof(userNameOrder));
         }
 
-        if (stockQuantity < 0)
+        if (customerId <= 0)
         {
-            throw new ArgumentException("StockQuantity must be greater than or equal to 0.", nameof(stockQuantity));
-        }
-
-        if (string.IsNullOrWhiteSpace(productCategory) || productCategory.Length < 3)
-        {
-            throw new ArgumentException("The ProductCategory must be at least 3 characters long.", nameof(productCategory));
+            throw new ArgumentException("Customer ID must be a positive number", nameof(customerId));
         }
 
         UserNameOrder = userNameOrder;
-        OrderDescription = string.IsNullOrWhiteSpace(orderDescription) 
-            ? "There was no description provided" 
-            : orderDescription;
-        StockQuantity = stockQuantity;
-        ProductCategory = productCategory;
-        OrderDate = DateTime.UtcNow;
+        CustomerId = customerId;
+        OrderDescription = orderDescription ?? "No description provided";
+        
+        // Use provided GUID or keep the default one
+        if (orderGuid.HasValue && orderGuid.Value != Guid.Empty)
+        {
+            OrderGuid = orderGuid.Value;
+        }
+    }
+
+    // Methods to manage items
+    public void AddItem(int productId, int quantity, decimal unitPrice)
+    {
+        _items.Add(new OrderItem(0, productId, quantity, unitPrice));
+    }
+
+    public void AddItem(OrderItem item)
+    {
+        if (item == null) throw new ArgumentNullException(nameof(item));
+        _items.Add(item);
+    }
+
+    public bool RemoveItem(int productId)
+    {
+        var item = _items.FirstOrDefault(i => i.ProductId == productId);
+        if (item != null)
+        {
+            return _items.Remove(item);
+        }
+        return false;
+    }
+
+    public void ClearItems()
+    {
+        _items.Clear();
+    }
+    
+    // Helper methods for order processing
+    public void MarkAsProcessed()
+    {
+        Status = "Processed";
+    }
+    
+    public void MarkAsShipped()
+    {
+        Status = "Shipped";
+    }
+    
+    public void MarkAsDelivered()
+    {
+        Status = "Delivered";
+    }
+    
+    public void MarkAsCancelled()
+    {
+        Status = "Cancelled";
     }
 }

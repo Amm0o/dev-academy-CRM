@@ -78,9 +78,10 @@ public sealed class Product : Entity
     }
 
     public DateTime ProductUpdateTime => _productUpdateTime;
+    public Guid ProductGuid { get; private set; }
 
     [SetsRequiredMembers]
-    public Product(string productName, string productDescription, double productPrice, int productQuantity, string productCategory)
+    public Product(string productName, string productDescription, double productPrice, int productQuantity, string productCategory, Guid? productGiud = null)
     {
         ProductName = productName;
         ProductDescription = productDescription;
@@ -88,5 +89,6 @@ public sealed class Product : Entity
         ProductQuantity = productQuantity;
         ProductCategory = productCategory;
         _productUpdateTime = DateTime.UtcNow;
+        ProductGuid = Guid.NewGuid(); 
     }
 }
