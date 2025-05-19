@@ -52,6 +52,7 @@ namespace CRM.Controllers
                     return BadRequest("Order must contain a valid username, customer ID, and at least one item");
                 }
 
+                // Checking if the customer making the order exists so we can then associate the order to a customer and it's info
                 if (!_basicCrud.CheckIfValueExists("Customers", "Email", request.UserNameOrder))
                 {
                     _logger?.LogError("Customer with ID {CustomerId} does not exist", request.CustomerId);
@@ -70,9 +71,11 @@ namespace CRM.Controllers
                 decimal orderTotal = 0;
                 foreach (var item in request.Items)
                 {
-                    
+
+                    // Get product from db
+                    var productData = _basicCrud.GetProductData(item.ProductId);
                     // Validate that the product exists
-                    if (!_basicCrud.CheckIfProductExists(item.ProductId))
+                    if ( productData== null)
                     {
                         _logger?.LogError("Product with ID {ProductId} not found", item.ProductId);
                         return NotFound($"Product with ID {item.ProductId} not found");
@@ -81,7 +84,7 @@ namespace CRM.Controllers
                     var productRow = productData.Rows[0];
                     int stock = Convert.ToInt32(productRow["Stock"]);
                     decimal price = Convert.ToDecimal(productRow["Price"]);
-                    string productName = productRow["Name"].ToString();
+                    string? productName = productRow["Name"].ToString();
 
                     // Check if product has enough stock
                     if (stock < item.Quantity)
@@ -96,72 +99,32 @@ namespace CRM.Controllers
                     orderTotal += price * item.Quantity;
                 }
 
-                // Begin transaction
-                using (var connection = new SqlConnection(_dbAccess.GetConnectionString()))
+                // Add the order to the database
+                try
                 {
-                    connection.Open();
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            // Insert order record
-                            var orderId = _dbAccess.ExecuteScalar<int>(
-                                @"INSERT INTO Orders (OrderGuid, CustomerId, UserNameOrder, OrderDescription, TotalAmount, Status)
-                                  VALUES (@OrderGuid, @CustomerId, @UserNameOrder, @OrderDescription, @TotalAmount, @Status);
-                                  SELECT SCOPE_IDENTITY();",
-                                new SqlParameter("@OrderGuid", order.OrderGuid),
-                                new SqlParameter("@CustomerId", order.CustomerId),
-                                new SqlParameter("@UserNameOrder", order.UserNameOrder),
-                                new SqlParameter("@OrderDescription", order.OrderDescription ?? string.Empty),
-                                new SqlParameter("@TotalAmount", order.TotalAmount),
-                                new SqlParameter("@Status", order.Status)
-                            );
+                    _logger.LogInformation("Initiating flow to store the order in DB");
+                    // Insert the Order record
+                    _basicCrud.InsertOrder(order);
+                    _logger.LogInformation("Inserted the order");
 
-                            // Insert order items
-                            foreach (var item in order.Items)
-                            {
-                                _dbAccess.ExecuteNonQuery(
-                                    @"INSERT INTO OrderItems (OrderId, ProductId, Quantity, UnitPrice)
-                                      VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice);
-                                      
-                                      -- Update product stock
-                                      UPDATE Products 
-                                      SET Stock = Stock - @Quantity
-                                      WHERE ProductId = @ProductId;",
-                                    new SqlParameter("@OrderId", orderId),
-                                    new SqlParameter("@ProductId", item.ProductId),
-                                    new SqlParameter("@Quantity", item.Quantity),
-                                    new SqlParameter("@UnitPrice", item.UnitPrice)
-                                );
-                            }
-
-                            // Commit transaction
-                            transaction.Commit();
-
-                            _logger?.LogInformation("Order {OrderGuid} created successfully for customer {CustomerId}", 
-                                order.OrderGuid, order.CustomerId);
-
-                            // Return success with order details
-                            return CreatedAtAction(
-                                nameof(GetOrder), 
-                                new { orderGuid = order.OrderGuid.ToString() }, 
-                                new { 
-                                    OrderGuid = order.OrderGuid, 
+                    return CreatedAtAction(
+                                nameof(GetOrder),
+                                new { orderGuid = order.OrderGuid.ToString() },
+                                new
+                                {
+                                    OrderGuid = order.OrderGuid,
                                     CustomerId = order.CustomerId,
                                     TotalAmount = order.TotalAmount,
                                     Status = order.Status,
                                     ItemCount = order.Items.Count
                                 }
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            // Rollback on error
-                            transaction.Rollback();
-                            _logger?.LogError(ex, "Failed to create order: {Message}", ex.Message);
-                            return StatusCode(500, "An error occurred while processing the order");
-                        }
-                    }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogCritical("Failed to insert order: {orderGuid}", order.OrderGuid);
+                    _logger?.LogError(ex, "Failed to create order: {Message}", ex.Message);
+                    return StatusCode(500, "An error occurred while processing the order");
                 }
             }
             catch (Exception ex)
@@ -177,13 +140,7 @@ namespace CRM.Controllers
             try
             {
                 // Query order details
-                var orderData = _dbAccess.ExecuteQuery(
-                    @"SELECT o.OrderId, o.OrderGuid, o.CustomerId, o.UserNameOrder, 
-                      o.OrderDescription, o.OrderDate, o.Status, o.TotalAmount
-                      FROM Orders o 
-                      WHERE o.OrderGuid = @OrderGuid",
-                    new SqlParameter("@OrderGuid", orderGuid)
-                );
+                var orderData = _basicCrud.GetOrderFromGuid(orderGuid);
 
                 if (orderData.Rows.Count == 0)
                 {
@@ -194,14 +151,7 @@ namespace CRM.Controllers
                 int orderId = Convert.ToInt32(orderRow["OrderId"]);
 
                 // Query order items
-                var itemsData = _dbAccess.ExecuteQuery(
-                    @"SELECT oi.OrderItemId, oi.ProductId, p.Name AS ProductName, 
-                      oi.Quantity, oi.UnitPrice, (oi.Quantity * oi.UnitPrice) AS LineTotal
-                      FROM OrderItems oi
-                      JOIN Products p ON oi.ProductId = p.ProductId
-                      WHERE oi.OrderId = @OrderId",
-                    new SqlParameter("@OrderId", orderId)
-                );
+                var itemsData = _basicCrud.GetAllOrederItems(orderId);
 
                 // Build order items list
                 var items = new List<object>();
@@ -247,38 +197,16 @@ namespace CRM.Controllers
             try
             {
                 // Verify customer exists
-                var customerExists = _dbAccess.ExecuteScalar<int>(
-                    "SELECT COUNT(*) FROM Customers WHERE CustomerId = @CustomerId",
-                    new SqlParameter("@CustomerId", customerId)
-                );
+                var customerExists = _basicCrud.CustomerExists(customerId);
 
-                if (customerExists == 0)
+                if (!customerExists)
                 {
-                    return NotFound($"Customer with ID {customerId} not found");
+                    _logger?.LogError("Failed to get customer: {CustomerId}", customerId);
+                    return StatusCode(404, "An error occurred while retrieving orders");
                 }
 
-                // Get orders
-                var orderData = _dbAccess.ExecuteQuery(
-                    @"SELECT OrderId, OrderGuid, UserNameOrder, OrderDate, Status, TotalAmount
-                      FROM Orders 
-                      WHERE CustomerId = @CustomerId
-                      ORDER BY OrderDate DESC",
-                    new SqlParameter("@CustomerId", customerId)
-                );
-
-                var orders = new List<object>();
-                foreach (DataRow row in orderData.Rows)
-                {
-                    orders.Add(new
-                    {
-                        OrderId = Convert.ToInt32(row["OrderId"]),
-                        OrderGuid = Guid.Parse(row["OrderGuid"].ToString()),
-                        UserNameOrder = row["UserNameOrder"].ToString(),
-                        OrderDate = Convert.ToDateTime(row["OrderDate"]),
-                        Status = row["Status"].ToString(),
-                        TotalAmount = Convert.ToDecimal(row["TotalAmount"])
-                    });
-                }
+                // Get all orders
+                var orders = _basicCrud.GetAllOrderForCustomer(customerId);
 
                 return Ok(orders);
             }
