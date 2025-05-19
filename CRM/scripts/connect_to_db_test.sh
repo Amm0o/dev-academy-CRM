@@ -1,5 +1,5 @@
 # From your host machine
-sqlcmd -S localhost,1433 -U SA -P "YourStrong@Passw0rd123!"
+sqlcmd -S localhost,1433 -U SA -P "YourStrong@Passw0rd123!" -C
 
 -- Check existing databases
 SELECT name FROM sys.databases

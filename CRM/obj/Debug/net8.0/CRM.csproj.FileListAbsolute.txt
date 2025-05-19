@@ -258,3 +258,13 @@
 /home/anoliveira/repos/dev-academy-CRM/CRM/obj/Debug/net8.0/CRM.pdb
 /home/anoliveira/repos/dev-academy-CRM/CRM/obj/Debug/net8.0/CRM.genruntimeconfig.cache
 /home/anoliveira/repos/dev-academy-CRM/CRM/obj/Debug/net8.0/ref/CRM.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/BCrypt.Net-Next.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Microsoft.Extensions.Configuration.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Abstractions.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Extensions.Logging.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Extensions.Logging.File.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Formatting.Compact.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Sinks.Async.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Sinks.File.dll
+/root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Sinks.RollingFile.dll

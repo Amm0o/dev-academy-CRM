@@ -59,21 +59,17 @@ namespace CRM.Infra
                 // Switch context to the correct db
                 _dbAccess.ExecuteNonQuery($"USE {databaseName}");
                 
-                // Create Customers table
+                // Create Users table
                 _dbAccess.ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Customers')
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
                     BEGIN
-                        CREATE TABLE Customers (
-                            CustomerId INT PRIMARY KEY IDENTITY(1,1),
+                        CREATE TABLE Users (
+                            UserId INT PRIMARY KEY IDENTITY(1,1),
                             Name NVARCHAR(100) NOT NULL,
-                            Email NVARCHAR(100) NOT NULL,
-                            Phone NVARCHAR(20),
-                            Address NVARCHAR(255),
-                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
-                            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+                            Email NVARCHAR(100) NOT NULL UNIQUE,
+                            PasswordHash NVARCHAR(255) NOT NULL,
+                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
                         );
-                        
-                        CREATE UNIQUE INDEX IX_Customers_Email ON Customers(Email);
                     END
                 ");
                 
@@ -102,7 +98,7 @@ namespace CRM.Infra
                         CREATE TABLE Orders (
                             OrderId INT PRIMARY KEY IDENTITY(1,1),
                             OrderGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
-                            CustomerId INT NOT NULL,
+                            UserId INT NOT NULL,
                             UserNameOrder NVARCHAR(100) NOT NULL,
                             OrderDescription NVARCHAR(500),
                             OrderDate DATETIME2 NOT NULL DEFAULT GETDATE(),
@@ -110,8 +106,8 @@ namespace CRM.Infra
                             TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
                             CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
                             UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
-                            CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) 
-                                REFERENCES Customers(CustomerId)
+                            CONSTRAINT FK_Orders_Users FOREIGN KEY (UserId) 
+                                REFERENCES Users(UserId)
                         );
                         
                         CREATE INDEX IX_Orders_OrderGuid ON Orders(OrderGuid);

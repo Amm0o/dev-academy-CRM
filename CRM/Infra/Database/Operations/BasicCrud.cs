@@ -11,7 +11,7 @@ namespace CRM.Infra {
         private readonly DatabaseAccess _dbAccess;
         private readonly ILogger<BasicCrud> _logger;
 
-        BasicCrud(DatabaseAccess databaseAccess, ILogger<BasicCrud> logger)
+        public BasicCrud(DatabaseAccess databaseAccess, ILogger<BasicCrud> logger)
         {
             _dbAccess = databaseAccess;
             _logger = logger;
