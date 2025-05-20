@@ -202,24 +202,24 @@ namespace CRM.Infra
             }
         }
 
-        public bool CustomerExists(int customerId)
+        public bool CustomerExists(int userId)
         {
             try
             {
-                _logger.LogInformation("Checking if customer with ID: {customerId} exists", customerId);
+                _logger.LogInformation("Checking if customer with ID: {customerId} exists", userId);
                 int exists = _dbAccess.ExecuteScalar<int>(
-                    @"SELECT TOP 1 1 FROM Customers WHERE CustomerId = @CustomerId",
-                    new SqlParameter("@CustomerId", customerId)
+                    @"SELECT TOP 1 1 FROM Users WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
                 );
 
                 bool customerExists = (exists == 1);
-                _logger.LogInformation("Customer with ID: {customerId} exists: {exists}", customerId, customerExists);
+                _logger.LogInformation("Customer with ID: {customerId} exists: {exists}", userId, customerExists);
                 return customerExists;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to check if customer with id: {customerId} exists: {exMessage}",
-                    customerId, ex.Message);
+                    userId, ex.Message);
                 return false;
             }
         }
