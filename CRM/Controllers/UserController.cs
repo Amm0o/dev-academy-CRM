@@ -65,19 +65,15 @@ namespace CRM.Controllers {
 
                 // Insert into DB
                 // Insert user into database
-                _dbAccess.ExecuteNonQuery(
-                    @"INSERT INTO Users (Name, Email, PasswordHash, CreatedAt) 
-                    VALUES (@Name, @Email, @PasswordHash, GETDATE());
-                    SELECT SCOPE_IDENTITY();",
-                    new Microsoft.Data.SqlClient.SqlParameter("@Name", user.Name),
-                    new Microsoft.Data.SqlClient.SqlParameter("@Email", user.Email),
-                    new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", hashedPassword)
-                );
+                _basicCrud.RegisterUser(user, hashedPassword);
 
-                var userId = _dbAccess.ExecuteScalar<int>(
-                    $"SELECT UserId FROM Users WHERE Email = @email",
-                    new SqlParameter("@email", user.Email)
-                );
+                var userId = _basicCrud.GetUserIdFromMail(user.Email);
+
+                if (userId == -1)
+                {
+                    _logger.LogError("Failed to get userId using email: {email}", user.Email);
+                    return StatusCode(500, "Failed to get userId using email");
+                }
 
                 // Create response object
                 var createdUser = new {
@@ -103,26 +99,37 @@ namespace CRM.Controllers {
             try
             {
                 // Query the database for the user
-                var userTable = _dbAccess.ExecuteQuery(
-                    "SELECT UserId, Name, Email, CreatedAt FROM Users WHERE UserId = @UserId",
-                    new Microsoft.Data.SqlClient.SqlParameter("@UserId", id)
-                );
-
-                if (userTable.Rows.Count == 0)
+                try
                 {
-                    return NotFound($"User with ID {id} not found");
+
+                    var userTable = _basicCrud.GetUserFromId(id);
+                    if (userTable.Rows.Count == 0)
+                    {
+                        _logger.LogInformation("Did not find any user with Id: {id}", id);
+                        return NotFound($"User with ID {id} not found");
+                    }
+
+                    // Create user object from the data row
+                    var userRow = userTable.Rows[0];
+                    var user = new
+                    {
+                        Id = Convert.ToInt32(userRow["UserId"]),
+                        Name = userRow["Name"].ToString(),
+                        Email = userRow["Email"].ToString(),
+                        CreatedAt = Convert.ToDateTime(userRow["CreatedAt"])
+                    };
+
+                    _logger.LogInformation("Retrieved user: {userdata}", userTable);
+
+                    return Ok(user);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message, "Failed to get user by ID", id);
+                    return StatusCode(500, "An error occured while getting user by Id");
                 }
 
-                // Create user object from the data row
-                var userRow = userTable.Rows[0];
-                var user = new {
-                    Id = Convert.ToInt32(userRow["UserId"]),
-                    Name = userRow["Name"].ToString(),
-                    Email = userRow["Email"].ToString(),
-                    CreatedAt = Convert.ToDateTime(userRow["CreatedAt"])
-                };
 
-                return Ok(user);
             }
             catch (Exception ex)
             {

@@ -4,7 +4,8 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using CRM.Models;
 
-namespace CRM.Infra {
+namespace CRM.Infra
+{
     public class BasicCrud
     {
 
@@ -257,6 +258,74 @@ namespace CRM.Infra {
             {
                 _logger.LogError(ex, "Failed to get all orders for customer with customerId: {customerId} with message: ", customerId, ex.Message);
                 throw; // Rethrow exception
+            }
+
+        }
+
+
+        public DataTable GetUserFromId(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Querying DB for user with ID: {id}", id);
+
+                var userData = _dbAccess.ExecuteQuery(
+                     "SELECT UserId, Name, Email, CreatedAt FROM Users WHERE UserId = @UserId",
+                     new SqlParameter("@UserId", id)
+                 );
+
+                return userData;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to get user by Id: {id}", id);
+                // Throw to bubble up the exception
+                throw;
+            }
+        }
+
+
+        public bool RegisterUser(User user, string passowordHash)
+        {
+            try
+            {
+                _logger.LogInformation("Inserting user into db");
+
+                _dbAccess.ExecuteNonQuery(
+                    @"INSERT INTO Users (Name, Email, PasswordHash, CreatedAt) 
+                    VALUES (@Name, @Email, @PasswordHash, GETDATE());
+                    SELECT SCOPE_IDENTITY();",
+                    new Microsoft.Data.SqlClient.SqlParameter("@Name", user.Name),
+                    new Microsoft.Data.SqlClient.SqlParameter("@Email", user.Email),
+                    new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passowordHash)
+                );
+
+                _logger.LogInformation("Inserted user into db");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, "Failed to insert user into db");
+                return false;
+            }
+        }
+
+        public int GetUserIdFromMail(string email)
+        {
+            try
+            {
+                var userId = _dbAccess.ExecuteScalar<int>(
+                    $"SELECT UserId FROM Users WHERE Email = @email",
+                    new SqlParameter("@email", email)
+                );
+
+                return userId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, "Failed to get userId using email {email}", email);
+                return -1;
             }
 
         }
