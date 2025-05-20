@@ -329,6 +329,336 @@ namespace CRM.Infra
             }
 
         }
+
+
+        public Carts GetUserCart(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting Cart for userId: {userId}", userId);
+
+                // First check if the user has a cart
+                var cartData = _dbAccess.ExecuteQuery(
+                    @"SELECT CartId, UserId, CreatedAt, UpdatedAt
+                    FROM Carts WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+
+                // If now CART exists create one
+                if (cartData.Rows.Count == 0)
+                {
+                    _logger.LogInformation("No cart existed for userId {userId}, created an empty one", userId);
+                    return new Carts(userId);
+                }
+
+                // Build cart object
+                var cartRow = cartData.Rows[0];
+                var cart = new Carts(userId)
+                {
+                    CreatedAt = Convert.ToDateTime(cartRow["CreatedAt"]),
+                    UpdatedAt = Convert.ToDateTime(cartRow["UpdatedAt"])
+                };
+
+                int cartId = Convert.ToInt32(cartRow["CartId"]);
+
+                // Get cartItems
+                var cartItemsData = _dbAccess.ExecuteQuery(
+                    @"SELECT ci.CartItemId, ci.ProductId, ci.Quantity, ci.UnitPrice, p.Name AS ProductName
+                    FROM CartItems ci
+                    JOIN Products p on ci ProductId = p.ProductId
+                    WHERE ci.CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+
+                // Add the items to the cart object
+                foreach (DataRow item in cartItemsData.Rows)
+                {
+                    cart.Items.Add(new CartItems(
+                        cartId,
+                        Convert.ToInt32(item["ProductId"]),
+                        Convert.ToInt32(item["Quantity"]),
+                        Convert.ToInt32(item["UnitPrice"])
+                    ));
+                }
+
+                _logger.LogInformation("Sucessfully build cart object and returned it for user: {userId}", userId);
+
+                return cart;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting cart for user {userId}", userId);
+                throw;
+            }
+        }
+
+
+        public bool AddItemToCart(int userId, int productId, int quantity, decimal unitPrice)
+        {
+            try
+            {
+                _logger.LogInformation("Adding product {ProductId} to cart for user {UserId}", productId, userId);
+
+                // Get or create a cart
+                int cartId = EnsureCartExists(userId);
+
+                var existingItem = _dbAccess.ExecuteQuery(
+                    @"SELECT CartItemId, Quantity FROM CartItems 
+                    WHERE CartId = @CartId AND ProductId = @ProductId",
+                    new SqlParameter("@CartId", cartId),
+                    new SqlParameter("@ProductId", productId)
+                );
+
+                if (existingItem.Rows.Count > 0)
+                {
+
+                    // Update existing item
+                    int currentQuantity = Convert.ToInt32(existingItem.Rows[0]["Quantity"]);
+                    int newQuantity = currentQuantity + quantity;
+
+                    _dbAccess.ExecuteNonQuery(
+                        @"UPDATE CartItems SET Quantity = @Quantity 
+                        WHERE CartId = @CartId AND ProductId = @ProductId",
+                        new SqlParameter("@CartId", cartId),
+                        new SqlParameter("@ProductId", productId),
+                        new SqlParameter("@Quantity", newQuantity)
+                    );
+                }
+                else
+                {
+                    // Add new item
+                    _dbAccess.ExecuteNonQuery(
+                        @"INSERT INTO CartItems (CartId, ProductId, Quantity, UnitPrice) 
+                        VALUES (@CartId, @ProductId, @Quantity, @UnitPrice)",
+                        new SqlParameter("@CartId", cartId),
+                        new SqlParameter("@ProductId", productId),
+                        new SqlParameter("@Quantity", quantity),
+                        new SqlParameter("@UnitPrice", unitPrice)
+                    );
+                }
+
+                // Update cart timestamp
+                _dbAccess.ExecuteNonQuery(
+                    "UPDATE Carts SET UpdatedAt = GETDATE() WHERE CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+
+                _logger.LogInformation("Added product {ProductId} to cart for user {UserId}", productId, userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add product {ProductId} to cart for user {UserId}", productId, userId);
+                return false;
+            }
+        }
+
+        public bool UpdateCartItem(int userId, int productId, int quantity)
+        {
+            try
+            {
+                _logger.LogInformation("Updating product {ProductId} quantity to {Quantity} in cart for user {UserId}",
+                    productId, quantity, userId);
+
+
+                // Get CartId -- return false 
+                int cartId = GetCartId(userId);
+                if (cartId == -1)
+                {
+                    _logger.LogInformation("Could not find any cart for userId {userId} - failed to update the cart", userId);
+                    return false;
+                }
+                else if (cartId == -2)
+                {
+                    _logger.LogInformation("Failed to return cart for userId {userId} - failed to update the cart", userId);
+                    return false;
+                }
+
+                // If quantity is 0 or less then remove it
+                if (quantity <= 0)
+                {
+                    _logger.LogInformation("Removing product {productId} from user {userId} cart since quantity {quantity} is < 0", productId, userId, quantity);
+                    return RemoveCartItem(userId, productId);
+                }
+
+                // Update Item Quantity
+                int rowsAffected = _dbAccess.ExecuteNonQueryReturn(
+                    @"UPDATE CartItems
+                    SET Quantity = @Quantity
+                    WHERE CartId = @CartId AND ProductId = @ProductId",
+                    new SqlParameter("@CartId", cartId),
+                    new SqlParameter("@ProductId", productId),
+                    new SqlParameter("@Quantity", quantity)
+                );
+
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning("No item found with ProductId {ProductId} in cart for user {UserId}",
+                        productId, userId);
+                    return false;
+                }
+
+                // Update cart timestamp
+                _dbAccess.ExecuteNonQuery(
+                    @"UPDATE Carts SET UpdatedAt = GETDATE() WHERE CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+                _logger.LogInformation("Updated quantity for product {ProductId} in cart for user {UserId}",
+                    productId, userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update product {ProductId} in cart for user {UserId}", 
+                    productId, userId);
+                return false;
+            }
+        }
+
+
+        public bool RemoveCartItem(int userId, int productId)
+        {
+            try
+            {
+                _logger.LogInformation("Removing product {ProductId} from cart for user {UserId}",
+                    productId, userId);
+
+                // Get Cart ID -- return false if cart does not exist
+                var cartData = _dbAccess.ExecuteQuery(
+                    @"SELECT CartId FROM Carts WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+
+                if (cartData.Rows.Count == 0)
+                {
+                    _logger.LogWarning("Cannot remove item - cart not found for user {UserId}", userId);
+                    return false;
+                }
+
+                int cartId = Convert.ToInt32(cartData.Rows[0]["CartId"]);
+
+                // Now Delete the item
+                int rowsDeleted = _dbAccess.ExecuteNonQueryReturn(
+                    @"DELETE FROM CartItems 
+                    WHERE CartId = @CartId AND ProductId = @ProductId",
+                    new SqlParameter("@CartId", cartId),
+                    new SqlParameter("@ProductId", productId)
+                );
+
+                if (rowsDeleted == 0)
+                {
+                    _logger.LogInformation("No item found with ProductId {ProductId} in cart for user {UserId}",
+                        productId, userId);
+                    return false;
+                }
+
+
+                // Update cart timtestamp
+                _dbAccess.ExecuteNonQuery(
+                    @"UPDATE Carts SET UpdatedAt = GETDATE() WHERE CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+
+                _logger.LogInformation("Removed product {ProductId} from cart for user {UserId}",
+                    productId, userId);
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to remove product {ProductId} from cart for user {UserId}", 
+                    productId, userId);
+                return false;
+            }
+        }
+
+
+        public bool ClearCart(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Clearing cart for user {UserId}", userId);
+
+                // Get CartId -- return false 
+                int cartId = GetCartId(userId);
+                if (cartId == -1)
+                {
+                    _logger.LogInformation("Could not find any cart for userId {userId}", userId);
+                    return false;
+                }
+                else if (cartId == -2)
+                {
+                    _logger.LogInformation("Failed to return cart for userId {userId}", userId);
+                    return false;
+                }
+
+                // Delete all items in the cart
+                _dbAccess.ExecuteNonQuery(
+                    @"DELETE FROM CartItems WHERE CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+
+                // Update Cart timestamp
+                _dbAccess.ExecuteNonQuery(
+                    @"UPDATE Carts SET UpdatedAt = GETDATE() WHERE CartId = @CartId",
+                    new SqlParameter("@CartId", cartId)
+                );
+
+                _logger.LogInformation("Cleared all items from cart for user {UserId}", userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to clear cart for user {UserId}", userId);
+                return false;
+            }
+        }
+
+        private int GetCartId(int userId) {
+            try
+            {
+                _logger.LogInformation("Getting CartId for user {userId}", userId);
+                DataTable cartData = _dbAccess.ExecuteQuery(
+                    @"SELECT CartId FROM Carts WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+
+                if (cartData.Rows.Count == 0)
+                {
+                    _logger.LogInformation("Could not find any cart for user {userId}", userId);
+                    return -1;
+                }
+
+                return Convert.ToInt32(cartData.Rows[0]["CartId"]);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to retrieve the cartId for user {userId}", userId);
+                return -2;
+            }
+        }
+
+        private int EnsureCartExists(int userId)
+        {
+            var cartData = _dbAccess.ExecuteQuery(
+                "SELECT CartId FROM Carts WHERE UserId = @UserId",
+                new SqlParameter("@UserId", userId)
+            );
+
+            if (cartData.Rows.Count > 0)
+            {
+                return Convert.ToInt32(cartData.Rows[0]["CartId"]);
+            }
+
+            // Create new cart
+            return _dbAccess.ExecuteScalar<int>(
+                @"INSERT INTO Carts (UserId, CreatedAt, UpdatedAt) 
+                VALUES (@UserId, GETDATE(), GETDATE());
+                SELECT SCOPE_IDENTITY();",
+                new SqlParameter("@UserId", userId)
+            );
+        }
     }
 
 

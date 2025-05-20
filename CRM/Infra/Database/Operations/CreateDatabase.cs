@@ -132,7 +132,41 @@ namespace CRM.Infra
                         );
                     END
                 ");
+
+                // Create cart table 
+                _dbAccess.ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Carts')
+                    BEGIN
+                        CREATE TABLE Carts (
+                            CartId INT PRIMARY KEY IDENTITY(1,1),
+                            UserId INT NOT NULL UNIQUE,
+                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            CONSTRAINT FK_Carts_Users FOREIGN Key (UserId)
+                                REFERENCES Users(UserId)
+                        );
+                    END
+                ");
                 
+                // Create Cart Item Table
+                _dbAccess.ExecuteNonQuery(@"
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CartItems')
+                BEGIN
+                    CREATE TABLE CartItems (
+                        CartItemId INT PRIMARY KEY IDENTITY(1,1),
+                        CartId INT NOT NULL,
+                        ProductId INT NOT NULL,
+                        Quantity INT NOT NULL DEFAULT 1,
+                        UnitPrice DECIMAL(18,2) NOT NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                        CONSTRAINT FK_CartItems_Carts FOREIGN KEY (CartId) 
+                            REFERENCES Carts(CartId),
+                        CONSTRAINT FK_CartItems_Products FOREIGN KEY (ProductId) 
+                            REFERENCES Products(ProductId)
+                    );
+                END
+            ");
+
                 _logger?.LogInformation("Tables created or already existed");
                 return true;
 

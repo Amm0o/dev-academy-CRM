@@ -55,6 +55,31 @@ namespace CRM.Infra {
             _logger?.LogInformation("Executed non-query: {Query}", query);
 
         }
+        
+
+        public int ExecuteNonQueryReturn(string query, params SqlParameter[] parameters)
+        {
+            _logger?.LogInformation("Executing non-query: {Query}", query);
+            int rowsAffected = 0;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (parameters != null)
+                    {
+                        command.Parameters.AddRange(parameters);
+                    }
+
+                    connection.Open();
+                    rowsAffected = command.ExecuteNonQuery(); // Capture the return value
+                }
+            }
+
+            _logger?.LogInformation("Executed non-query: {Query}, affected {RowCount} rows", query, rowsAffected);
+            return rowsAffected;
+        }
+
 
         /// <summary>
         /// Executes a SQL query that returns a result set.
@@ -63,20 +88,25 @@ namespace CRM.Infra {
         /// <param name="query">The SQL query to execute</param>
         /// <param name="parameters">Optional SQL parameters to use with the query (prevents SQL injection)</param>
         /// <returns>A DataTable containing the query results</returns>
-        public DataTable ExecuteQuery(string query, params SqlParameter[] parameters) {
+        public DataTable ExecuteQuery(string query, params SqlParameter[] parameters)
+        {
             _logger?.LogInformation("Executing query: {Query}", query);
 
             DataTable result = new DataTable();
 
-            using(var connection = new SqlConnection(_connectionString)) {
-                using(var command = new SqlCommand(query, connection)) {
-                    if(parameters != null) {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (parameters != null)
+                    {
                         command.Parameters.AddRange(parameters);
                     }
 
                     connection.Open();
 
-                    using (var adapter = new SqlDataAdapter(command)) {
+                    using (var adapter = new SqlDataAdapter(command))
+                    {
                         adapter.Fill(result);
                     }
                 }
