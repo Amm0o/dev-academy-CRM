@@ -1,5 +1,3 @@
-
-
 using Microsoft.Data.SqlClient;
 using System.Data;
 using CRM.Models;
@@ -509,7 +507,7 @@ namespace CRM.Infra
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to update product {ProductId} in cart for user {UserId}", 
+                _logger.LogError(ex, "Failed to update product {ProductId} in cart for user {UserId}",
                     productId, userId);
                 return false;
             }
@@ -566,7 +564,7 @@ namespace CRM.Infra
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to remove product {ProductId} from cart for user {UserId}", 
+                _logger.LogError(ex, "Failed to remove product {ProductId} from cart for user {UserId}",
                     productId, userId);
                 return false;
             }
@@ -614,7 +612,8 @@ namespace CRM.Infra
             }
         }
 
-        private int GetCartId(int userId) {
+        private int GetCartId(int userId)
+        {
             try
             {
                 _logger.LogInformation("Getting CartId for user {userId}", userId);
@@ -659,7 +658,72 @@ namespace CRM.Infra
                 new SqlParameter("@UserId", userId)
             );
         }
+
+
+        public bool InsertProduct(Product product)
+        {
+            try
+            {
+                _logger.LogInformation("Adding following product {product} to db", product);
+
+                _dbAccess.ExecuteNonQuery(
+                    @"INSERT INTO Product (Name, Description, Category, Price, Stock, ProductGuid, CreatedAt, UpdatedAt)
+                    VALUES (@Name, @Description, @Category, @Price, @Stock, GETDATE(), GETDATE())",
+                    new SqlParameter("@Name", product.ProductName),
+                    new SqlParameter("@Description", product.ProductDescription),
+                    new SqlParameter("@Category", product.ProductCategory),
+                    new SqlParameter("@Price", product.ProductPrice),
+                    new SqlParameter("@Stock", product.ProductQuantity),
+                    new SqlParameter("@ProductGuid", product.ProductGuid)
+                );
+
+                _logger.LogInformation("Added product {name} to db", product.ProductName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add product {product} to db", product);
+                return false;
+            }
+        }
+
+
+        // Update product in DB -- To do create a new method to update single fields
+        public bool UpdateProduct(Product product, int productId)
+        {
+            try
+            {
+                _logger.LogInformation("Updating product with name {name} and id {id}", product.ProductName, productId); ;
+                int rowsAffected = _dbAccess.ExecuteNonQueryReturn(@"
+                    UPDATE Products 
+                        Description = @Description,
+                        Category = @Category,
+                        Price = @Price,
+                        Stock = @Stock,
+                        UpdatedAt = GETDATE()
+                        WHERE ProductId = @ProductId",
+                    new SqlParameter("@Name", product.ProductName),
+                    new SqlParameter("@Category", product.ProductCategory),
+                    new SqlParameter("@Price", product.ProductPrice),
+                    new SqlParameter("@Stock", product.ProductQuantity),
+                    new SqlParameter("@ProductId", productId)
+                );
+
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning("No product found with id {id} to update", productId);
+                    return false;
+                }
+
+                _logger.LogInformation("Successfully update product {name} - {id}", product.ProductName, productId);
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to update product  {name} - {id}", product.ProductName, productId);
+                return false;
+            }
+        }
     }
-
-
 }

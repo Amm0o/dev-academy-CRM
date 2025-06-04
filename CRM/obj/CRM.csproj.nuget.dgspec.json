@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {}
+    "C:\\Users\\anoliveira\\Documents\\repos\\dev-academy-CRM\\CRM\\CRM.csproj": {}
   },
   "projects": {
-    "/root/repos/dev-academy-CRM/CRM/CRM.csproj": {
+    "C:\\Users\\anoliveira\\Documents\\repos\\dev-academy-CRM\\CRM\\CRM.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
+        "projectUniqueName": "C:\\Users\\anoliveira\\Documents\\repos\\dev-academy-CRM\\CRM\\CRM.csproj",
         "projectName": "CRM",
-        "projectPath": "/root/repos/dev-academy-CRM/CRM/CRM.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/root/repos/dev-academy-CRM/CRM/obj/",
+        "projectPath": "C:\\Users\\anoliveira\\Documents\\repos\\dev-academy-CRM\\CRM\\CRM.csproj",
+        "packagesPath": "C:\\Users\\anoliveira\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\anoliveira\\Documents\\repos\\dev-academy-CRM\\CRM\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\anoliveira\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -32,7 +38,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -48,7 +60,7 @@
             },
             "Microsoft.Data.SqlClient": {
               "target": "Package",
-              "version": "[6.0.1, )"
+              "version": "[6.0.2, )"
             },
             "Microsoft.Extensions.Configuration": {
               "target": "Package",
@@ -86,12 +98,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.15, 8.0.15]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -100,7 +106,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.115/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

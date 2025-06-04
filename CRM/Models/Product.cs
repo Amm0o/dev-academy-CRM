@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace CRM.Models;
 
-public sealed class Product : Entity 
+public sealed class Product : Entity
 {
     private string _productName;
     private string _productDescription;
@@ -89,6 +89,19 @@ public sealed class Product : Entity
         ProductQuantity = productQuantity;
         ProductCategory = productCategory;
         _productUpdateTime = DateTime.UtcNow;
-        ProductGuid = Guid.NewGuid(); 
+        ProductGuid = Guid.NewGuid();
+    }
+    
+
+    public static Product CreateNew(string name, string description, string category, double price, int stock)
+    {
+        return new Product(
+            name,
+            description,
+            price,
+            stock,
+            category,
+            Guid.NewGuid()
+        );
     }
 }
