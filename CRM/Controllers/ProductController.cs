@@ -66,13 +66,11 @@ namespace CRM.Controllers
         {
             try
             {
-
                 if (String.IsNullOrWhiteSpace(request.Name) || String.IsNullOrWhiteSpace(request.Description) || string.IsNullOrWhiteSpace(request.Category)
-                    || request.Price <= 0 || request.Stock < 0
-                )
+                    || request.Price <= 0 || request.Stock < 0)
                 {
                     _logger.LogError("Failed to add product {product} because data provided was invalid", request);
-                    return StatusCode(500, "Data provided was invalid");
+                    return BadRequest("Data provided was invalid");
                 }
 
                 var product = Product.CreateNew(
@@ -91,22 +89,26 @@ namespace CRM.Controllers
                     return StatusCode(500, "Failed to create the product");
                 }
 
+                int productId = _basicCrud.GetProductIdFromGuid(product.ProductGuid);
+                if (productId == -1)
+                {
+                    _logger.LogError("Failed to retrieve ProductId for ProductGuid: {guid}", product.ProductGuid);
+                    return StatusCode(500, "Failed to retrieve product ID");
+                }
+
                 return Ok(new
                 {
-                    Message = "Product created sucessfully",
+                    Message = "Product created successfully",
                     ProductName = product.ProductName,
                     ProductGuid = product.ProductGuid,
+                    ProductId = productId
                 });
-
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "Error while adding product to db {product}", request);
                 return StatusCode(500, $"An error occurred while adding product to db");
             }
-
-
-
         }
 
         // Todo - Create route to update single fields

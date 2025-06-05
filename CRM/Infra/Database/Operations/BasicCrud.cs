@@ -67,7 +67,7 @@ namespace CRM.Infra
         {
             // Verify product exists and get details
             var productData = _dbAccess.ExecuteQuery(
-                "SELECT ProductId, Name, Price, Stock FROM Products WHERE ProductId = @ProductId",
+                "SELECT ProductId, Name, Price, Stock, CreatedAt, UpdatedAt FROM Products WHERE ProductId = @ProductId",
                 new SqlParameter("@ProductId", productId)
             );
 
@@ -86,7 +86,7 @@ namespace CRM.Infra
             try
             {
                 var productData = _dbAccess.ExecuteQuery(
-                    "SELECT ProductId, Name, Price, Stock FROM Products WHERE ProductId = @ProductId",
+                    "SELECT ProductId, Name, Price, Stock, CreatedAt, UpdatedAt FROM Products WHERE ProductId = @ProductId",
                     new SqlParameter("@ProductId", productId)
                 );
 
@@ -667,8 +667,8 @@ namespace CRM.Infra
                 _logger.LogInformation("Adding following product {product} to db", product);
 
                 _dbAccess.ExecuteNonQuery(
-                    @"INSERT INTO Product (Name, Description, Category, Price, Stock, ProductGuid, CreatedAt, UpdatedAt)
-                    VALUES (@Name, @Description, @Category, @Price, @Stock, GETDATE(), GETDATE())",
+                    @"INSERT INTO Products (Name, Description, Category, Price, Stock, ProductGuid, CreatedAt, UpdatedAt)
+                    VALUES (@Name, @Description, @Category, @Price, @Stock, @ProductGuid, GETDATE(), GETDATE())",
                     new SqlParameter("@Name", product.ProductName),
                     new SqlParameter("@Description", product.ProductDescription),
                     new SqlParameter("@Category", product.ProductCategory),
@@ -687,22 +687,23 @@ namespace CRM.Infra
             }
         }
 
-
         // Update product in DB -- To do create a new method to update single fields
         public bool UpdateProduct(Product product, int productId)
         {
             try
             {
-                _logger.LogInformation("Updating product with name {name} and id {id}", product.ProductName, productId); ;
+                _logger.LogInformation("Updating product with name {name} and id {id}", product.ProductName, productId);
                 int rowsAffected = _dbAccess.ExecuteNonQueryReturn(@"
-                    UPDATE Products 
-                        Description = @Description,
-                        Category = @Category,
-                        Price = @Price,
-                        Stock = @Stock,
-                        UpdatedAt = GETDATE()
-                        WHERE ProductId = @ProductId",
+            UPDATE Products 
+            SET Name = @Name,
+                Description = @Description,
+                Category = @Category,
+                Price = @Price,
+                Stock = @Stock,
+                UpdatedAt = GETDATE()
+            WHERE ProductId = @ProductId",
                     new SqlParameter("@Name", product.ProductName),
+                    new SqlParameter("@Description", product.ProductDescription),
                     new SqlParameter("@Category", product.ProductCategory),
                     new SqlParameter("@Price", product.ProductPrice),
                     new SqlParameter("@Stock", product.ProductQuantity),
@@ -715,14 +716,31 @@ namespace CRM.Infra
                     return false;
                 }
 
-                _logger.LogInformation("Successfully update product {name} - {id}", product.ProductName, productId);
+                _logger.LogInformation("Successfully updated product {name} - {id}", product.ProductName, productId);
                 return true;
-
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to update product  {name} - {id}", product.ProductName, productId);
+                _logger.LogError(ex, "Failed to update product {name} - {id}", product.ProductName, productId);
                 return false;
+            }
+        }
+
+        public int GetProductIdFromGuid(Guid productGuid)
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving ProductId for ProductGuid: {productGuid}", productGuid);
+                var productId = _dbAccess.ExecuteScalar<int>(
+                    "SELECT ProductId FROM Products WHERE ProductGuid = @ProductGuid",
+                    new SqlParameter("@ProductGuid", productGuid)
+                );
+                return productId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve ProductId for ProductGuid: {productGuid}", productGuid);
+                return -1;
             }
         }
     }

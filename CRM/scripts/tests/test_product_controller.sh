@@ -1,7 +1,9 @@
 #!/bin/bash
 # filepath: c:\Users\anoliveira\Documents\repos\dev-academy-CRM\test_product_controller.sh
 
-BASE_URL="http://localhost:5025/api/product"
+set -x  # Enable command tracing for debugging
+
+BASE_URL="http://localhost:5205/api/product"
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -26,7 +28,7 @@ echo
 
 # Test 1: Add a new product
 echo "1. Testing POST /api/product/add"
-ADD_RESPONSE=$(curl -s -w "%{http_code}" -X POST "$BASE_URL/add" \
+ADD_RESPONSE=$(curl -v -w "%{http_code}" -X POST "$BASE_URL/add" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test Product",
@@ -55,7 +57,7 @@ echo
 
 # Test 2: Try to add invalid product
 echo "2. Testing POST /api/product/add with invalid data"
-INVALID_RESPONSE=$(curl -s -w "%{http_code}" -X POST "$BASE_URL/add" \
+INVALID_RESPONSE=$(curl -v -w "%{http_code}" -X POST "$BASE_URL/add" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "",
@@ -78,7 +80,7 @@ echo
 
 # Test 3: Get a product (assuming ProductId 1 exists)
 echo "3. Testing GET /api/product/1"
-GET_RESPONSE=$(curl -s -w "%{http_code}" -X GET "$BASE_URL/1")
+GET_RESPONSE=$(curl -v -w "%{http_code}" -X GET "$BASE_URL/1")
 
 GET_HTTP_CODE="${GET_RESPONSE: -3}"
 GET_BODY="${GET_RESPONSE%???}"
@@ -97,7 +99,7 @@ echo
 
 # Test 4: Get non-existent product
 echo "4. Testing GET /api/product/99999"
-NOT_FOUND_RESPONSE=$(curl -s -w "%{http_code}" -X GET "$BASE_URL/99999")
+NOT_FOUND_RESPONSE=$(curl -v -w "%{http_code}" -X GET "$BASE_URL/99999")
 
 NOT_FOUND_HTTP_CODE="${NOT_FOUND_RESPONSE: -3}"
 NOT_FOUND_BODY="${NOT_FOUND_RESPONSE%???}"
@@ -112,7 +114,7 @@ echo
 
 # Test 5: Update a product (assuming ProductId 1 exists)
 echo "5. Testing PUT /api/product/update/1"
-UPDATE_RESPONSE=$(curl -s -w "%{http_code}" -X PUT "$BASE_URL/update/1" \
+UPDATE_RESPONSE=$(curl -v -w "%{http_code}" -X PUT "$BASE_URL/update/1" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Test Product",
@@ -139,7 +141,7 @@ echo
 
 # Test 6: Update with invalid data
 echo "6. Testing PUT /api/product/update/1 with invalid data"
-INVALID_UPDATE_RESPONSE=$(curl -s -w "%{http_code}" -X PUT "$BASE_URL/update/1" \
+INVALID_UPDATE_RESPONSE=$(curl -v -w "%{http_code}" -X PUT "$BASE_URL/update/1" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "",
