@@ -58,7 +58,7 @@ namespace CRM.Infra
         /// <returns>True if email exists, false otherwise</returns>
         public bool CheckIfValueExists(string valueToCheck)
         {
-            return CheckIfValueExists("Customers", "Email", valueToCheck);
+            return CheckIfValueExists("Users", "Email", valueToCheck);
         }
 
 
@@ -309,6 +309,38 @@ namespace CRM.Infra
             }
         }
 
+        public bool DeleteUser(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Removing user with {id} from db", userId);
+
+                int rowsAffected = _dbAccess.ExecuteNonQueryReturn(
+                    @"DELETE FROM CartItems WHERE CartId IN (SELECT CartId FROM Carts WHERE UserId = @UserId);
+                    DELETE FROM Carts WHERE UserId = @UserId;
+                    DELETE FROM OrderItems WHERE OrderId IN (SELECT OrderId FROM Orders WHERE UserId = @UserId);
+                    DELETE FROM Orders WHERE UserId = @UserId;
+                    DELETE FROM Users WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+
+                if (rowsAffected == 0)
+                {
+                    _logger.LogError("Failed to delete user with id {id}", userId);
+                    return false;
+                }
+
+                _logger.LogInformation("Successfully deleted user with id {id}", userId);
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while executing the DELETE SQL query to remove the user from db");
+                return false;
+            }
+        }
+
         public int GetUserIdFromMail(string email)
         {
             try
@@ -363,7 +395,7 @@ namespace CRM.Infra
                 var cartItemsData = _dbAccess.ExecuteQuery(
                     @"SELECT ci.CartItemId, ci.ProductId, ci.Quantity, ci.UnitPrice, p.Name AS ProductName
                     FROM CartItems ci
-                    JOIN Products p on ci ProductId = p.ProductId
+                    JOIN Products p on ci.ProductId = p.ProductId
                     WHERE ci.CartId = @CartId",
                     new SqlParameter("@CartId", cartId)
                 );
