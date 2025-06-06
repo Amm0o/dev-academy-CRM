@@ -102,25 +102,26 @@ namespace CRM.Infra
 
         }
 
-        public bool InsertOrder(Order order)
+        public int InsertOrder(Order order)
         {
             try
             {
                 _logger.LogInformation("Inserting into db order with GUID: {orderGuid}", order.OrderGuid);
-                var orderId = _dbAccess.ExecuteScalar<Int32>(
-                @"INSERT INTO Orders (OrderGuid, CustomerId, UserNameOrder, OrderDescription, TotalAmount, Status)
-                VALUES (@OrderGuid, @CustomerId, @UserNameOrder, @OrderDescription, @TotalAmount, @Status);",
-                new SqlParameter("@OrderGuid", order.OrderGuid),
-                new SqlParameter("@CustomerId", order.CustomerId),
-                new SqlParameter("@UserNameOrder", order.UserNameOrder),
-                new SqlParameter("@OrderDescription", order.OrderDescription ?? string.Empty),
-                new SqlParameter("@TotalAmount", order.TotalAmount),
-                new SqlParameter("@Status", order.Status));
+                var orderId = _dbAccess.ExecuteScalar<int>(
+                    @"INSERT INTO Orders (OrderGuid, UserId, UserNameOrder, OrderDescription, TotalAmount, Status)
+                    VALUES (@OrderGuid, @CustomerId, @UserNameOrder, @OrderDescription, @TotalAmount, @Status);
+                    SELECT SCOPE_IDENTITY();",
+                    new SqlParameter("@OrderGuid", order.OrderGuid),
+                    new SqlParameter("@CustomerId", order.CustomerId),
+                    new SqlParameter("@UserNameOrder", order.UserNameOrder),
+                    new SqlParameter("@OrderDescription", order.OrderDescription ?? string.Empty),
+                    new SqlParameter("@TotalAmount", order.TotalAmount),
+                    new SqlParameter("@Status", order.Status)
+                );
 
-                _logger.LogInformation("Insert order {orderGuid} successfully", order.OrderGuid);
+                _logger.LogInformation("Inserted order {orderGuid} with ID: {orderId}", order.OrderGuid, orderId);
 
                 _logger.LogInformation("Inserting order items for order ID: {orderId}", orderId);
-
                 foreach (var item in order.Items)
                 {
                     _dbAccess.ExecuteNonQuery(
@@ -139,14 +140,14 @@ namespace CRM.Infra
                 }
 
                 _logger.LogInformation("Successfully inserted {count} order items for order ID: {orderId}",
-                order.Items.Count, orderId);
+                    order.Items.Count, orderId);
 
-                return true;
+                return orderId;
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "Failed to log the order: {orderGuid}", order.OrderGuid);
-                return false;
+                throw; // To propagate the exception
             }
 
 
@@ -159,7 +160,7 @@ namespace CRM.Infra
             {
                 _logger.LogInformation("Retrieving order: {orderGuid} from db", orderGuid);
                 var orderData = _dbAccess.ExecuteQuery(
-                    @"SELECT o.OrderId, o.OrderGuid, o.CustomerId, o.UserNameOrder, 
+                    @"SELECT o.OrderId, o.OrderGuid, o.UserId, o.UserNameOrder, 
                     o.OrderDescription, o.OrderDate, o.Status, o.TotalAmount
                     FROM Orders o 
                     WHERE o.OrderGuid = @OrderGuid",
@@ -231,7 +232,7 @@ namespace CRM.Infra
                 var orderData = _dbAccess.ExecuteQuery(
                 @"SELECT OrderId, OrderGuid, UserNameOrder, OrderDate, Status, TotalAmount
                     FROM Orders 
-                    WHERE CustomerId = @CustomerId
+                    WHERE UserId = @CustomerId
                     ORDER BY OrderDate DESC",
                 new SqlParameter("@CustomerId", customerId));
 

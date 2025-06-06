@@ -53,7 +53,7 @@ namespace CRM.Controllers
                 }
 
                 // Checking if the customer making the order exists so we can then associate the order to a customer and it's info
-                if (!_basicCrud.CheckIfValueExists("Customers", "Email", request.UserNameOrder))
+                if (!_basicCrud.CheckIfValueExists("Users", "Email", request.UserNameOrder))
                 {
                     _logger?.LogError("Customer with ID {CustomerId} does not exist", request.CustomerId);
                     return NotFound($"Customer with ID {request.CustomerId} not found");
@@ -104,8 +104,15 @@ namespace CRM.Controllers
                 {
                     _logger.LogInformation("Initiating flow to store the order in DB");
                     // Insert the Order record
-                    _basicCrud.InsertOrder(order);
+                    int orderId = _basicCrud.InsertOrder(order);
+                    
                     _logger.LogInformation("Inserted the order");
+
+                    // Add orderId for each item
+                    foreach (var item in order.Items)
+                    {
+                        item.SetOrderId(orderId);
+                    }
 
                     return CreatedAtAction(
                                 nameof(GetOrder),
@@ -173,7 +180,7 @@ namespace CRM.Controllers
                 {
                     OrderId = Convert.ToInt32(orderRow["OrderId"]),
                     OrderGuid = Guid.Parse(orderRow["OrderGuid"].ToString()),
-                    CustomerId = Convert.ToInt32(orderRow["CustomerId"]),
+                    CustomerId = Convert.ToInt32(orderRow["UserId"]),
                     UserNameOrder = orderRow["UserNameOrder"].ToString(),
                     OrderDescription = orderRow["OrderDescription"].ToString(),
                     OrderDate = Convert.ToDateTime(orderRow["OrderDate"]),

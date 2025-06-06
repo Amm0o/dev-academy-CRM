@@ -78,7 +78,8 @@ USER_RESPONSE=$(run_curl POST "$BASE_URL/User/register" '{
 USER_STATUS=$?
 if [ $USER_STATUS -eq 201 ]; then
     print_status 0 "User registered successfully"
-    USER_ID=$(echo "$USER_RESPONSE" | jq -r '.Id')
+    USER_ID=$(echo "$USER_RESPONSE" | grep -o '"id": *[0-9]\+' | sed 's/"id": *//')
+    echo $USER_RESPONSE
     echo "User ID: $USER_ID"
 else
     print_status 1 "Failed to register user (HTTP: $USER_STATUS)"
@@ -150,11 +151,23 @@ echo
 
 # Test 7: Cart Controller - Add Item to Cart
 echo "7. Testing POST /api/cart/add"
-CART_RESPONSE=$(run_curl POST "$BASE_URL/cart/add" '{
-    "userId": '"$USER_ID"',
-    "productId": '"$PRODUCT_ID"',
+echo "DEBUG: USER_ID='$USER_ID'"
+echo "DEBUG: PRODUCT_ID='$PRODUCT_ID'"
+
+# Generate the JSON payload first and show it
+JSON_PAYLOAD=$(cat << EOF
+{
+    "userId": $USER_ID,
+    "productId": $PRODUCT_ID,
     "quantity": 2
-}')
+}
+EOF
+)
+
+echo "DEBUG: JSON Payload:"
+echo "$JSON_PAYLOAD"
+
+CART_RESPONSE=$(run_curl POST "$BASE_URL/cart/add" "$JSON_PAYLOAD")
 CART_STATUS=$?
 if [ $CART_STATUS -eq 200 ]; then
     print_status 0 "Item added to cart successfully"
@@ -203,9 +216,10 @@ ORDER_RESPONSE=$(run_curl POST "$BASE_URL/Order" '{
     ]
 }')
 ORDER_STATUS=$?
+echo $ORDER_RESPONSE
 if [ $ORDER_STATUS -eq 201 ]; then
     print_status 0 "Order created successfully"
-    ORDER_GUID=$(echo "$ORDER_RESPONSE" | grep -o '"OrderGuid":"[^"]*"' | cut -d'"' -f4)
+    ORDER_GUID=$(echo "$ORDER_RESPONSE" | grep -o '"orderGuid":"[^"]*"' | cut -d'"' -f4)
     echo "Order GUID: $ORDER_GUID"
 else
     print_status 1 "Failed to create order (HTTP: $ORDER_STATUS)"
@@ -216,6 +230,7 @@ echo
 echo "11. Testing GET /api/Order/$ORDER_GUID"
 GET_ORDER_RESPONSE=$(run_curl GET "$BASE_URL/Order/$ORDER_GUID")
 GET_ORDER_STATUS=$?
+echo $GET_ORDER_RESPONSE
 if [ $GET_ORDER_STATUS -eq 200 ]; then
     print_status 0 "Order retrieved successfully"
 else
@@ -227,6 +242,7 @@ echo
 echo "12. Testing GET /api/Order/customer/$USER_ID"
 GET_ORDERS_RESPONSE=$(run_curl GET "$BASE_URL/Order/customer/$USER_ID")
 GET_ORDERS_STATUS=$?
+echo $GET_ORDERS_RESPONSE
 if [ $GET_ORDERS_STATUS -eq 200 ]; then
     print_status 0 "Customer orders retrieved successfully"
 else

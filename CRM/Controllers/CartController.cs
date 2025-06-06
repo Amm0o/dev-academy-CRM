@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRM.Controllers
 {
@@ -12,14 +13,14 @@ namespace CRM.Controllers
     [Route("api/[controller]")]
     public class CartController : ControllerBase
     {
-        private readonly BasicCrud _basicCurd;
+        private readonly BasicCrud _basicCrud;
         private readonly ILogger<CartController> _logger;
 
 
         // TO DO: Add checks to ensure both of the parameters are never null
         public CartController(BasicCrud basicCrud, ILogger<CartController> logger)
         {
-            _basicCurd = basicCrud ?? throw new ArgumentNullException(nameof(basicCrud));
+            _basicCrud = basicCrud ?? throw new ArgumentNullException(nameof(basicCrud));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -31,14 +32,14 @@ namespace CRM.Controllers
             try
             {
                 // Validate that the user exists
-                if (!_basicCurd.CustomerExists(userId))
+                if (!_basicCrud.CustomerExists(userId))
                 {
                     _logger.LogWarning("User {UserId} not found when attempting to get cart", userId);
                     return NotFound($"User with ID {userId} not found");
                 }
 
                 // Get cart or return empty if not exists
-                var cart = _basicCurd.GetUserCart(userId);
+                var cart = _basicCrud.GetUserCart(userId);
                 return Ok(cart);
             }
             catch (Exception ex)
@@ -54,7 +55,9 @@ namespace CRM.Controllers
         public IActionResult AddToCart([FromBody] CartItemRequest request)
         {
             try
-            {// Request validation
+            {
+                _logger.LogInformation("Received the following payload for route add to cart:\n {payload}", request);
+                // Request validation
                 if (request.UserId <= 0 || request.ProductId <= 0 || request.Quantity <= 0)
                 {
                     _logger.LogError("Tried to add to cart using negative values for UserId, ProductId, and Quantity");
@@ -62,7 +65,7 @@ namespace CRM.Controllers
                 }
 
                 // Check if product exists and there's enough stock
-                var productData = _basicCurd.GetProductData(request.ProductId);
+                var productData = _basicCrud.GetProductData(request.ProductId);
                 if (productData == null || productData.Rows.Count == 0)
                 {
                     _logger.LogError("Could not find product {productId}", request.ProductId);
@@ -80,7 +83,7 @@ namespace CRM.Controllers
                     return BadRequest($"Not enough stock available. Requested: {request.Quantity}, Available: {stock}");
                 }
 
-                bool success = _basicCurd.AddItemToCart(request.UserId, request.ProductId, request.Quantity, price);
+                bool success = _basicCrud.AddItemToCart(request.UserId, request.ProductId, request.Quantity, price);
 
                 if (!success)
                 {
@@ -89,7 +92,7 @@ namespace CRM.Controllers
                 }
 
                 // If we succed return updated Cart
-                var updatedCart = _basicCurd.GetUserCart(request.UserId);
+                var updatedCart = _basicCrud.GetUserCart(request.UserId);
                 return Ok(updatedCart);
             }
             catch (Exception ex)
@@ -119,7 +122,7 @@ namespace CRM.Controllers
                     return BadRequest("Quantity cannot be negative");
                 }
 
-                bool success = _basicCurd.UpdateCartItem(request.UserId, request.ProductId, request.Quantity);
+                bool success = _basicCrud.UpdateCartItem(request.UserId, request.ProductId, request.Quantity);
                 if (!success)
                 {
                     return NotFound("Cart Item not found");
@@ -127,7 +130,7 @@ namespace CRM.Controllers
 
                 _logger.LogInformation("Updated cart succesfully for user, {userId}", request.UserId);
                 // Return updated cart
-                var updatedCart = _basicCurd.GetUserCart(request.UserId);
+                var updatedCart = _basicCrud.GetUserCart(request.UserId);
                 return Ok(updatedCart);
 
             }
@@ -145,7 +148,7 @@ namespace CRM.Controllers
         {
             try
             {
-                bool success = _basicCurd.RemoveCartItem(userId, productId);
+                bool success = _basicCrud.RemoveCartItem(userId, productId);
                 if (!success)
                 {
                     _logger.LogError("Error deleting productId {productId} for cart associated with customer {userId}", productId, userId);
@@ -170,7 +173,7 @@ namespace CRM.Controllers
             {
                 _logger.LogInformation("Clearing car for user {user}", userId);
 
-                bool success = _basicCurd.ClearCart(userId);
+                bool success = _basicCrud.ClearCart(userId);
                 if (!success)
                 {
                     _logger.LogError("Failed to clear cart for user {user} NOT FOUND", userId);
@@ -186,16 +189,18 @@ namespace CRM.Controllers
             }
         }
 
-        
+            
         public class CartItemRequest
-    {
-        public int UserId { get; set; }
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-    }
-
-
-
+        {
+            [Range(1, int.MaxValue, ErrorMessage = "UserId must be a positive value")]
+            public int UserId { get; set; }
+            
+            [Range(1, int.MaxValue, ErrorMessage = "ProductId must be a positive value")]
+            public int ProductId { get; set; }
+            
+            [Range(1, int.MaxValue, ErrorMessage = "Quantity must be a positive value")]
+            public int Quantity { get; set; }
+        }
 
     }
 }
