@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -64,6 +67,31 @@ class CRMMain
             // Add service for basic CRUD activities
             builder.Services.AddSingleton<BasicCrud>();
 
+            // Add JWT configuration
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
+                };
+            });
+
+            // Register BlackListing Service
+            builder.Services.AddSingleton<CRM.Infra.Authentication.ITokenBlacklistService, CRM.Infra.Authentication.TokenBlacklistService>();
+
+            // Add JWT Authorization service.
+            builder.Services.AddAuthorization();
+            
+
+            // Register the service
+            builder.Services.AddScoped<CRM.Infra.Authentication.JwtService>();
+
             // Build the application
             var app = builder.Build();
 
@@ -115,8 +143,13 @@ class CRMMain
             }
 
             app.UseHttpsRedirection();
-            app.UseAuthorization();
             app.MapControllers();
+
+            // Add authentication and authorization middleware
+            app.UseAuthentication();
+            // Use middleware for blacklisting
+            app.UseMiddleware<CRM.Infra.Middlewares.Authentication.JwtBlacklistMiddleware>();
+            app.UseAuthorization();
 
             // Log startup message with higher severity to ensure it appears
             logger.LogWarning("CRM application started successfully at {Time}", DateTime.UtcNow);

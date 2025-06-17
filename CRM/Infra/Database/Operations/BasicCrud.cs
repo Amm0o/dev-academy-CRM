@@ -776,5 +776,178 @@ namespace CRM.Infra
                 return -1;
             }
         }
+
+
+        /// <summary>
+        /// Retrieves user data by email address
+        /// </summary>
+        /// <param name="email">Email address to search for</param>
+        /// <returns>DataTable containing user data, or empty DataTable if not found</returns>
+        public DataTable GetUserByEmail(string email)
+        {
+            try
+            {
+                _logger?.LogInformation("Retrieving user data for email: {Email}", email);
+
+                var userData = _dbAccess.ExecuteQuery(
+                    @"SELECT UserId, Name, Email, Password, Role, UserCreateTime, UserUpdateTime 
+                    FROM Users 
+                    WHERE Email = @Email",
+                    new SqlParameter("@Email", email)
+                );
+
+                _logger?.LogInformation("Retrieved {RowCount} user records for email: {Email}", 
+                    userData.Rows.Count, email);
+
+                return userData;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving user data for email: {Email}", email);
+                return new DataTable(); // Return empty DataTable on error
+            }
+        }
+
+        /// <summary>
+        /// Retrieves user data by user ID
+        /// </summary>
+        /// <param name="userId">User ID to search for</param>
+        /// <returns>DataTable containing user data, or empty DataTable if not found</returns>
+        public DataTable GetUserById(int userId)
+        {
+            try
+            {
+                _logger?.LogInformation("Retrieving user data for ID: {UserId}", userId);
+
+                var userData = _dbAccess.ExecuteQuery(
+                    @"SELECT UserId, Name, Email, Password, Role, UserCreateTime, UserUpdateTime 
+                    FROM Users 
+                    WHERE UserId = @UserId",
+                    new SqlParameter("@UserId", userId)
+                );
+
+                _logger?.LogInformation("Retrieved {RowCount} user records for ID: {UserId}", 
+                    userData.Rows.Count, userId);
+
+                return userData;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving user data for ID: {UserId}", userId);
+                return new DataTable(); // Return empty DataTable on error
+            }
+        }
+
+        /// <summary>
+        /// Converts DataTable row to User model object
+        /// </summary>
+        /// <param name="userRow">DataRow containing user data</param>
+        /// <returns>User object or null if conversion fails</returns>
+        public User? ConvertToUserModel(DataRow userRow)
+        {
+            try
+            {
+                if (userRow == null)
+                {
+                    _logger?.LogWarning("Cannot convert null DataRow to User model");
+                    return null;
+                }
+
+                // Extract data from DataRow
+                int userId = Convert.ToInt32(userRow["UserId"]);
+                string name = userRow["Name"]?.ToString() ?? string.Empty;
+                string email = userRow["Email"]?.ToString() ?? string.Empty;
+                string passwordHash = userRow["Password"]?.ToString() ?? string.Empty;
+                
+                // Parse role - assuming it's stored as string in DB
+                UserRole role = UserRole.Regular; // Default value
+                if (userRow["Role"] != null && userRow["Role"] != DBNull.Value)
+                {
+                    string roleString = userRow["Role"].ToString();
+                    if (Enum.TryParse<UserRole>(roleString, true, out UserRole parsedRole))
+                    {
+                        role = parsedRole;
+                    }
+                }
+
+                // Parse timestamps if they exist
+                DateTime? createTime = null;
+                DateTime? updateTime = null;
+
+                if (userRow["UserCreateTime"] != null && userRow["UserCreateTime"] != DBNull.Value)
+                {
+                    createTime = Convert.ToDateTime(userRow["UserCreateTime"]);
+                }
+
+                if (userRow["UserUpdateTime"] != null && userRow["UserUpdateTime"] != DBNull.Value)
+                {
+                    updateTime = Convert.ToDateTime(userRow["UserUpdateTime"]);
+                }
+
+                // Create User object
+                var user = new User(userId,name, email, passwordHash, role);
+
+                
+                _logger?.LogDebug("Successfully converted DataRow to User model for email: {Email}", email);
+                return user;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error converting DataRow to User model");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a User model object by email
+        /// </summary>
+        /// <param name="email">Email address to search for</param>
+        /// <returns>User object or null if not found</returns>
+        public User? GetUserModelByEmail(string email)
+        {
+            try
+            {
+                var userData = GetUserByEmail(email);
+                
+                if (userData.Rows.Count == 0)
+                {
+                    _logger?.LogInformation("No user found with email: {Email}", email);
+                    return null;
+                }
+
+                return ConvertToUserModel(userData.Rows[0]);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting User model by email: {Email}", email);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a User model object by ID
+        /// </summary>
+        /// <param name="userId">User ID to search for</param>
+        /// <returns>User object or null if not found</returns>
+        public User? GetUserModelById(int userId)
+        {
+            try
+            {
+                var userData = GetUserById(userId);
+                
+                if (userData.Rows.Count == 0)
+                {
+                    _logger?.LogInformation("No user found with ID: {UserId}", userId);
+                    return null;
+                }
+
+                return ConvertToUserModel(userData.Rows[0]);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting User model by ID: {UserId}", userId);
+                return null;
+            }
+        }
     }
 }

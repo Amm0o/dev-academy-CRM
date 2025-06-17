@@ -27,3 +27,7 @@
 # Run tests
 > from CRM.Tests
 - dotnet test
+
+
+# Dotnet Dependencies
+- dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 8.0.10

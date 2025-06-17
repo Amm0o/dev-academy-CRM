@@ -42,6 +42,18 @@ public sealed class User : Entity // Sealed to prevent inheritance
         UpdateRole(role);
     }
 
+    // Add a constructor that allows setting the ID (for database retrieval)
+    public User(int id, string name, string email, string password, UserRole role = UserRole.Regular)
+    {
+        Id = id; // Set the inherited Id
+        UserCreateTime = DateTime.UtcNow;
+        UserUpdateTime = UserCreateTime;
+        UpdateName(name);
+        UpdateEmail(email);
+        SetPasswordHash(password);
+        UpdateRole(role);
+    }
+
     public void SetPasswordHash(string password)
     {
         if (string.IsNullOrWhiteSpace(password))

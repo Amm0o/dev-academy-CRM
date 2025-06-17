@@ -1,12 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "93J7VK1tIghBhI3Uw7SzzbCJ8ot3Dmn3YgFqPlN9uqhwdoPea/gF8PicEwUDV3epQ4cIiZ/IVN6KZAf5n9rK1w==",
+  "dgSpecHash": "lVTqgBuDEoKOXnrvHPEduTJTGVPaRXh+trN9u1G7yLUtNB09m5WdZpGWgLDDY8+FWJWbAFjYUuZqk+OFxWiYvg==",
   "success": true,
   "projectFilePath": "/home/anoliveira/repos/dev-academy-CRM/CRM/CRM.csproj",
   "expectedPackageFiles": [
     "/home/anoliveira/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
+    "/home/anoliveira/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/8.0.10/microsoft.aspnetcore.authentication.jwtbearer.8.0.10.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/microsoft.aspnetcore.openapi/8.0.12/microsoft.aspnetcore.openapi.8.0.12.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/microsoft.bcl.asyncinterfaces/1.1.1/microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
     "/home/anoliveira/.nuget/packages/microsoft.bcl.cryptography/8.0.0/microsoft.bcl.cryptography.8.0.0.nupkg.sha512",

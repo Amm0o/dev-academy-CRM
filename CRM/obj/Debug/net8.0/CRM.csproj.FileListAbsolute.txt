@@ -269,3 +269,4 @@
 /root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Sinks.File.dll
 /root/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Serilog.Sinks.RollingFile.dll
 /home/anoliveira/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/BCrypt.Net-Next.dll
+/home/anoliveira/repos/dev-academy-CRM/CRM/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
