@@ -5,12 +5,14 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using BCrypt.Net;
-using Microsoft.Data.SqlClient; // Add this for BCrypt
+using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Authorization; // Add this for BCrypt
 
 namespace CRM.Controllers {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Protect all endpoints from User controller
     public class UserController : ControllerBase
     {
 
@@ -35,6 +37,7 @@ namespace CRM.Controllers {
         }
 
         [HttpPost("register")]
+        [AllowAnonymous] // Allow registration without authentication
         public IActionResult RegisterUser([FromBody] UserRegistrationRequest request)
         {
             // Example post request
@@ -67,7 +70,7 @@ namespace CRM.Controllers {
                 // Hash password
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 // Create User object with hashed password
-                var user = new User(request.Name, request.Email, hashedPassword);
+                var user = new User(request.Name, request.Email, hashedPassword, UserRole.Regular);
 
                 // Insert into DB
                 // Insert user into database
@@ -89,6 +92,7 @@ namespace CRM.Controllers {
                     Id = userId,
                     Name = user.Name,
                     Email = user.Email,
+                    Role = user.Role,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -109,7 +113,7 @@ namespace CRM.Controllers {
         {
             try
             {
-                _logger.LogInformation("Attempting to delete user with ID {id}", userId); 
+                _logger.LogInformation("Attempting to delete user with ID {id}", userId);
                 // Validation
                 if (userId <= 0)
                 {

@@ -6,11 +6,14 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace CRM.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Protect all order endpoints
     public class OrderController : ControllerBase
     {
         private readonly DatabaseAccess _dbAccess;
@@ -75,7 +78,7 @@ namespace CRM.Controllers
                     // Get product from db
                     var productData = _basicCrud.GetProductData(item.ProductId);
                     // Validate that the product exists
-                    if ( productData== null)
+                    if (productData == null)
                     {
                         _logger?.LogError("Product with ID {ProductId} not found", item.ProductId);
                         return NotFound($"Product with ID {item.ProductId} not found");
@@ -105,7 +108,7 @@ namespace CRM.Controllers
                     _logger.LogInformation("Initiating flow to store the order in DB");
                     // Insert the Order record
                     int orderId = _basicCrud.InsertOrder(order);
-                    
+
                     _logger.LogInformation("Inserted the order");
 
                     // Add orderId for each item

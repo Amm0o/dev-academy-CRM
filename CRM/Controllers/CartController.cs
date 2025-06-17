@@ -6,10 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CRM.Controllers
 {
     [ApiController]
+    [Authorize] // Protect all cart endpoints
     [Route("api/[controller]")]
     public class CartController : ControllerBase
     {

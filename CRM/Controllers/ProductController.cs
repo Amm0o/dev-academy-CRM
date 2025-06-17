@@ -5,12 +5,15 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace CRM.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Protect all endpoints from ProductController
     public class ProductController : ControllerBase
     {
         private readonly BasicCrud _basicCrud;

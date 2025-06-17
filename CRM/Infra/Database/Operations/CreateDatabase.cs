@@ -68,6 +68,7 @@ namespace CRM.Infra
                             Name NVARCHAR(100) NOT NULL,
                             Email NVARCHAR(100) NOT NULL UNIQUE,
                             PasswordHash NVARCHAR(255) NOT NULL,
+                            Role NVARCHAR(255) NOT NULL,
                             CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
                         );
                     END

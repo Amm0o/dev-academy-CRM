@@ -291,12 +291,13 @@ namespace CRM.Infra
                 _logger.LogInformation("Inserting user into db");
 
                 _dbAccess.ExecuteNonQuery(
-                    @"INSERT INTO Users (Name, Email, PasswordHash, CreatedAt) 
-                    VALUES (@Name, @Email, @PasswordHash, GETDATE());
+                    @"INSERT INTO Users (Name, Email, PasswordHash, Role,CreatedAt) 
+                    VALUES (@Name, @Email, @PasswordHash, @Role,GETDATE());
                     SELECT SCOPE_IDENTITY();",
                     new Microsoft.Data.SqlClient.SqlParameter("@Name", user.Name),
                     new Microsoft.Data.SqlClient.SqlParameter("@Email", user.Email),
-                    new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passowordHash)
+                    new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passowordHash),
+                    new Microsoft.Data.SqlClient.SqlParameter("@Role", user.Role)
                 );
 
                 _logger.LogInformation("Inserted user into db");
@@ -790,7 +791,7 @@ namespace CRM.Infra
                 _logger?.LogInformation("Retrieving user data for email: {Email}", email);
 
                 var userData = _dbAccess.ExecuteQuery(
-                    @"SELECT UserId, Name, Email, Password, Role, UserCreateTime, UserUpdateTime 
+                    @"SELECT UserId, Name, Email, PasswordHash, Role, UserCreateTime, UserUpdateTime 
                     FROM Users 
                     WHERE Email = @Email",
                     new SqlParameter("@Email", email)
@@ -820,7 +821,7 @@ namespace CRM.Infra
                 _logger?.LogInformation("Retrieving user data for ID: {UserId}", userId);
 
                 var userData = _dbAccess.ExecuteQuery(
-                    @"SELECT UserId, Name, Email, Password, Role, UserCreateTime, UserUpdateTime 
+                    @"SELECT UserId, Name, Email, PasswordHash, Role, UserCreateTime, UserUpdateTime 
                     FROM Users 
                     WHERE UserId = @UserId",
                     new SqlParameter("@UserId", userId)
@@ -857,7 +858,7 @@ namespace CRM.Infra
                 int userId = Convert.ToInt32(userRow["UserId"]);
                 string name = userRow["Name"]?.ToString() ?? string.Empty;
                 string email = userRow["Email"]?.ToString() ?? string.Empty;
-                string passwordHash = userRow["Password"]?.ToString() ?? string.Empty;
+                string passwordHash = userRow["PasswordHash"]?.ToString() ?? string.Empty;
                 
                 // Parse role - assuming it's stored as string in DB
                 UserRole role = UserRole.Regular; // Default value
