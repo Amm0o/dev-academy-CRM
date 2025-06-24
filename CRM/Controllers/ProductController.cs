@@ -117,6 +117,7 @@ namespace CRM.Controllers
 
         // Todo - Create route to update single fields
         [HttpPut("update/{productId}")]
+        [Authorize(Roles = "Admin")]
         public IActionResult UpdateProduct([FromBody] ProductRequest request, int productId)
         {
             try
