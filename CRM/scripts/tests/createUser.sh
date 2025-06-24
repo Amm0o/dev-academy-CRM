@@ -8,6 +8,7 @@ read -r -d '' USER_JSON <<EOF
   "Name": "Test User",
   "Email": "testuser@example.com",
   "Password": "StrongPassword123!"
+  "Role": "Admin"
 }
 EOF
 

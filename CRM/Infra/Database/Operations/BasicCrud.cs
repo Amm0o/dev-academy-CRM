@@ -269,7 +269,7 @@ namespace CRM.Infra
                 _logger.LogInformation("Querying DB for user with ID: {id}", id);
 
                 var userData = _dbAccess.ExecuteQuery(
-                     "SELECT UserId, Name, Email, CreatedAt FROM Users WHERE UserId = @UserId",
+                     "SELECT UserId, Name, Email, CreatedAt, Role FROM Users WHERE UserId = @UserId",
                      new SqlParameter("@UserId", id)
                  );
 

@@ -72,7 +72,7 @@ namespace CRM.Controllers
                 }
 
                 // Generate the token JWT token
-                string token = _jwtService.GenerateToken(userData.Id, userData.Email, userData.Name, userData.Role.ToString());
+                string token = _jwtService.GenerateToken(userData.Id, userData.Email, userData.Name, userData.Role);
 
                 _logger.LogInformation("User {email} logged in successfully", request.Email);
 

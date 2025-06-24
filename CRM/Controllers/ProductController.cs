@@ -65,6 +65,7 @@ namespace CRM.Controllers
         }
 
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public IActionResult AddProduct([FromBody] ProductRequest request)
         {
             try

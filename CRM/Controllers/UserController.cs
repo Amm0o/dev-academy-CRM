@@ -13,7 +13,7 @@ namespace CRM.Controllers {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize] // Protect all endpoints from User controller
-    public class UserController : ControllerBase
+    public class UserController : BaseAuthController
     {
 
 
@@ -22,7 +22,7 @@ namespace CRM.Controllers {
         private readonly BasicCrud _basicCrud;
 
         // DI Injecting dbAccess and logger
-        public UserController(DatabaseAccess dbAccess, ILogger<UserController> logger, BasicCrud basicCrud)
+        public UserController(DatabaseAccess dbAccess, ILogger<UserController> logger, BasicCrud basicCrud) : base(logger)
         {
             _logger = logger; // Store the injected logger
             _dbAccess = dbAccess;
@@ -111,51 +111,53 @@ namespace CRM.Controllers {
         [HttpDelete("{userId}")]
         public IActionResult DeleteUser(int userId)
         {
-            try
+            return CheckAuthorizationAndExecute(userId, () =>
             {
-                _logger.LogInformation("Attempting to delete user with ID {id}", userId);
-                // Validation
-                if (userId <= 0)
+                try
                 {
-                    _logger.LogError("Invalid userId {id} provided", userId);
-                    return BadRequest("User ID is always a positive integer > 0");
+                    _logger.LogInformation("Attempting to delete user with ID {id}", userId);
+                    // Validation
+                    if (userId <= 0)
+                    {
+                        _logger.LogError("Invalid userId {id} provided", userId);
+                        return BadRequest("User ID is always a positive integer > 0");
+                    }
+
+                    var UserTableData = _basicCrud.GetUserFromId(userId);
+                    if (UserTableData.Rows.Count != 1)
+                    {
+                        _logger.LogError("User with id {id} does not exist in db we cannot delete it", userId);
+                        return NotFound($"User with id {userId}, is not present in db");
+                    }
+
+                    bool success = _basicCrud.DeleteUser(userId);
+                    if (!success)
+                    {
+                        _logger.LogError("Failed to delete user with id {id}from DB!", userId);
+                        return StatusCode(500, $"Failed to delete user with id {userId} from db!");
+                    }
+
+                    _logger.LogInformation("Delete user with Id {userId} from db!", userId);
+                    return Ok(new { Message = $"Delete user with {UserTableData.Rows[0]["Email"]}" });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error occurred while deleting user with id {id}", userId);
+                    return StatusCode(500, $"Unexpected error occurred while deleting user with id {userId}");
                 }
 
-                var UserTableData = _basicCrud.GetUserFromId(userId);
-                if (UserTableData.Rows.Count != 1)
-                {
-                    _logger.LogError("User with id {id} does not exist in db we cannot delete it", userId);
-                    return NotFound($"User with id {userId}, is not present in db");
-                }
-
-                bool success = _basicCrud.DeleteUser(userId);
-                if (!success)
-                {
-                    _logger.LogError("Failed to delete user with id {id}from DB!", userId);
-                    return StatusCode(500, $"Failed to delete user with id {userId} from db!");
-                }
-
-                _logger.LogInformation("Delete user with Id {userId} from db!", userId);
-                return Ok(new { Message = $"Delete user with {UserTableData.Rows[0]["Email"]}" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error occurred while deleting user with id {id}", userId);
-                return StatusCode(500, $"Unexpected error occurred while deleting user with id {userId}");
-            }
-
+            });
 
         }
 
         [HttpGet("{id}")]
         public IActionResult GetUserById(int id)
         {
-            try
+            return CheckAuthorizationAndExecute(id, () =>
             {
                 // Query the database for the user
                 try
                 {
-
                     var userTable = _basicCrud.GetUserFromId(id);
                     if (userTable.Rows.Count == 0)
                     {
@@ -170,10 +172,11 @@ namespace CRM.Controllers {
                         Id = Convert.ToInt32(userRow["UserId"]),
                         Name = userRow["Name"].ToString(),
                         Email = userRow["Email"].ToString(),
-                        CreatedAt = Convert.ToDateTime(userRow["CreatedAt"])
+                        CreatedAt = Convert.ToDateTime(userRow["CreatedAt"]),
+                        Role = userRow["Role"].ToString()
                     };
 
-                    _logger.LogInformation("Retrieved user: {userdata}", userTable);
+                    _logger.LogInformation("Retrieved user: {userdata}", user);
 
                     return Ok(user);
                 }
@@ -182,14 +185,7 @@ namespace CRM.Controllers {
                     _logger.LogError(ex.Message, "Failed to get user by ID", id);
                     return StatusCode(500, "An error occured while getting user by Id");
                 }
-
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
-                return StatusCode(500, "An error occurred while retrieving the user");
-            }
+            });
         }
 
         [HttpGet("email/{email}")]
@@ -214,30 +210,35 @@ namespace CRM.Controllers {
                     return NotFound($"User with email {email} was not found");
                 }
 
-                var userDataTable = _basicCrud.GetUserFromId(userId);
-
-                if (userDataTable.Rows.Count != 1)
+                return CheckAuthorizationAndExecute(userId, () =>
                 {
-                    _logger.LogError("No user found with email {email}", email);
-                    return NotFound($"No user found with email {email}");
-                }
+                    var userDataTable = _basicCrud.GetUserFromId(userId);
 
-                var userRow = userDataTable.Rows[0];
+                    if (userDataTable.Rows.Count != 1)
+                    {
+                        _logger.LogError("No user found with email {email}", email);
+                        return NotFound($"No user found with email {email}");
+                    }
 
-                var user = new
-                {
-                    Id = Convert.ToInt32(userRow["UserId"]),
-                    Name = userRow["Name"].ToString(),
-                    Email = userRow["Email"].ToString(),
-                    CreatedAt = Convert.ToDateTime(userRow["CreatedAt"])
-                };
+                    var userRow = userDataTable.Rows[0];
 
-                _logger.LogInformation("Retrieved user with email {email}", user.Email);
+                    var user = new
+                    {
+                        Id = Convert.ToInt32(userRow["UserId"]),
+                        Name = userRow["Name"].ToString(),
+                        Email = userRow["Email"].ToString(),
+                        CreatedAt = Convert.ToDateTime(userRow["CreatedAt"]),
+                        Role = userRow["Role"].ToString()
+                    };
 
-                return Ok(new
-                {
-                    Message = $"Found user in db with email {user.Email}",
-                    Data = user
+                    _logger.LogInformation("Retrieved user with email {email}", user.Email);
+
+                    return Ok(new
+                    {
+                        Message = $"Found user in db with email {user.Email}",
+                        Data = user
+                    });
+
                 });
 
             }
@@ -247,5 +248,6 @@ namespace CRM.Controllers {
                 return StatusCode(500, $"Unexpected error occured while retrieving user with email {email}");
             }
         }
+        
     }
 }

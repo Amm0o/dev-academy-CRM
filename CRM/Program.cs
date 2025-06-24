@@ -86,7 +86,11 @@ class CRMMain
             builder.Services.AddSingleton<CRM.Infra.Authentication.ITokenBlacklistService, CRM.Infra.Authentication.TokenBlacklistService>();
 
             // Add JWT Authorization service.
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("RegularOrAdmin", policy => policy.RequireRole("Regular", "Admin"));
+            });
             
 
             // Register the service

@@ -2,7 +2,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
+using CRM.Models;
 namespace CRM.Infra.Authentication
 {
     public class JwtService
@@ -17,7 +17,7 @@ namespace CRM.Infra.Authentication
             _logger = logger;
         }
 
-        public string GenerateToken(int userId, string email, string name, string role = "User")
+        public string GenerateToken(int userId, string email, string name, UserRole role = UserRole.Regular)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace CRM.Infra.Authentication
                     new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                     new Claim(ClaimTypes.Email, email),
                     new Claim(ClaimTypes.Name, name),
-                    new Claim(ClaimTypes.Role, role),
+                    new Claim(ClaimTypes.Role, role.ToString()),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
