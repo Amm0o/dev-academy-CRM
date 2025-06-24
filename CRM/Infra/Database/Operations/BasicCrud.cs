@@ -797,7 +797,7 @@ namespace CRM.Infra
                     new SqlParameter("@Email", email)
                 );
 
-                _logger?.LogInformation("Retrieved {RowCount} user records for email: {Email}", 
+                _logger?.LogInformation("Retrieved {RowCount} user records for email: {Email}",
                     userData.Rows.Count, email);
 
                 return userData;
@@ -827,7 +827,7 @@ namespace CRM.Infra
                     new SqlParameter("@UserId", userId)
                 );
 
-                _logger?.LogInformation("Retrieved {RowCount} user records for ID: {UserId}", 
+                _logger?.LogInformation("Retrieved {RowCount} user records for ID: {UserId}",
                     userData.Rows.Count, userId);
 
                 return userData;
@@ -859,7 +859,7 @@ namespace CRM.Infra
                 string name = userRow["Name"]?.ToString() ?? string.Empty;
                 string email = userRow["Email"]?.ToString() ?? string.Empty;
                 string passwordHash = userRow["PasswordHash"]?.ToString() ?? string.Empty;
-                
+
                 // Parse role - assuming it's stored as string in DB
                 UserRole role = UserRole.Regular; // Default value
                 if (userRow["Role"] != null && userRow["Role"] != DBNull.Value)
@@ -886,9 +886,9 @@ namespace CRM.Infra
                 }
 
                 // Create User object
-                var user = new User(userId,name, email, passwordHash, role);
+                var user = new User(userId, name, email, passwordHash, role);
 
-                
+
                 _logger?.LogDebug("Successfully converted DataRow to User model for email: {Email}", email);
                 return user;
             }
@@ -909,7 +909,7 @@ namespace CRM.Infra
             try
             {
                 var userData = GetUserByEmail(email);
-                
+
                 if (userData.Rows.Count == 0)
                 {
                     _logger?.LogInformation("No user found with email: {Email}", email);
@@ -935,7 +935,7 @@ namespace CRM.Infra
             try
             {
                 var userData = GetUserById(userId);
-                
+
                 if (userData.Rows.Count == 0)
                 {
                     _logger?.LogInformation("No user found with ID: {UserId}", userId);
@@ -948,6 +948,27 @@ namespace CRM.Infra
             {
                 _logger?.LogError(ex, "Error getting User model by ID: {UserId}", userId);
                 return null;
+            }
+        }
+
+
+        public bool PromoteUserToAdmin(string email)
+        {
+            try
+            {
+                _dbAccess.ExecuteNonQuery(@"
+                    UPDATE Users SET Role = 'Admin' WHERE Email = @Email",
+                    new SqlParameter("@Email", email));
+
+                _logger.LogInformation("Successfully promoted user {email} to adamin", email);
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Unexpected error occurred while promoting user {email} to admin in db", email);
+                throw;
             }
         }
     }
