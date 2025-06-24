@@ -256,6 +256,8 @@ if [ "$promoted_status" = "200" ]; then
             -H "Authorization: Bearer $PROMOTED_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$test_product_data")
+
+        echo $test_product_data
         
         test_product_status=$(extract_status "$test_product_response")
         
