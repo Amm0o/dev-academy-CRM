@@ -11,10 +11,11 @@ using Microsoft.AspNetCore.Builder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 class CRMMain
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         try
         {
@@ -96,6 +97,9 @@ class CRMMain
             // Register the service
             builder.Services.AddScoped<CRM.Infra.Authentication.JwtService>();
 
+            // Register db seeder
+            builder.Services.AddScoped<DatabaseSeeder>();
+
             // Build the application
             var app = builder.Build();
 
@@ -130,6 +134,13 @@ class CRMMain
 
             } catch (Exception ex) {
                 logger.LogCritical(ex, "Failed to created db and it's tables");
+            }
+
+            // Now seed db
+            using (var scope = app.Services.CreateScope())
+            {
+                var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+                await seeder.SeedInitialAdminAsync();
             }
             
             // Force log a test message at all levels
