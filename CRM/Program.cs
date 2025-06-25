@@ -100,16 +100,29 @@ class CRMMain
             // Register db seeder
             builder.Services.AddScoped<DatabaseSeeder>();
 
+            // Add CORS service
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("DevelopmentPolicy", builder =>
+                {
+                    builder.WithOrigins("http://localhost:3000") // React dev server
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
+
+
             // Build the application
             var app = builder.Build();
 
             // Get logger from application services - use CRMMain as the category
             var logger = app.Services.GetRequiredService<ILogger<CRMMain>>();
 
-
             // Initialize DB and it's tables
 
-            try {
+            try
+            {
                 logger.LogInformation("Initializing DBs and it's tables...");
 
                 var dbCreation = app.Services.GetRequiredService<DatabaseCreation>();
@@ -119,20 +132,25 @@ class CRMMain
 
                 // Create databse and table
                 var dbCreated = dbCreation.CreateDatabaseIfNotExist(dbName);
-                if (dbCreated) {
+                if (dbCreated)
+                {
                     logger.LogInformation("Database created initiating table creation");
 
                     bool tablesCreated = dbCreation.CreateTablesIfNotExist(dbName);
 
                     if (tablesCreated)
                         logger.LogInformation("Tables created");
-                    else 
+                    else
                         logger.LogError("Failed to created the tables");
-                } else {
+                }
+                else
+                {
                     logger.LogError("Failed to create db");
                 }
 
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 logger.LogCritical(ex, "Failed to created db and it's tables");
             }
 

@@ -25,6 +25,56 @@ namespace CRM.Controllers
             _basicCrud = basicCrud ?? throw new ArgumentNullException(nameof(basicCrud));
         }
 
+
+        // Endpoint to retrieve all products
+        [HttpGet]
+        public IActionResult GetAllProducts()
+        {
+            try
+            {
+                _logger.LogInformation("Got request to grab all products from db!");
+
+                var allProducts = _basicCrud.GetAllProducts();
+
+                if (allProducts == null)
+                {
+                    _logger.LogWarning("Query to db returned no products");
+                    return StatusCode(404, "No products were found!");
+                }
+
+                var productsParsed = new List<object>();
+                foreach (DataRow product in allProducts.Rows)
+                {
+                    productsParsed.Add(new
+                    {
+                        ProductId = Convert.ToInt32(product["ProductId"]),
+                        ProductName = product["Name"].ToString(),
+                        ProductDescription = product["Description"].ToString(),
+                        ProdcutCategory = product["Category"].ToString(),
+                        ProductPrice = Convert.ToDecimal(product["Price"]),
+                        ProductStock = Convert.ToInt32(product["Stock"]),
+                        ProductGuid = Guid.Parse(product["ProductGuid"].ToString()),
+                        CreatedAt = Convert.ToDateTime(product["CreatedAt"]),
+                        UpdatedAt = Convert.ToDateTime(product["UpdatedAt"]),
+                    });
+                }
+
+                _logger.LogInformation("Successfuly got all Producrs from DB and parsed it sending to client");
+                return Ok(new
+                {
+                    Message = "Successfully got all products from DB",
+                    Data = productsParsed 
+                });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while getting all the products");
+                return StatusCode(500, "Unexpected error happened while retriving all the products");
+            }
+        }
+
+
         // GET: api/product/{productId}
         [HttpGet("{productId}")]
         public IActionResult GetProduct(int productId)

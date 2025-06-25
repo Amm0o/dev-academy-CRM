@@ -81,6 +81,36 @@ namespace CRM.Infra
             return true;
         }
 
+
+        public DataTable GetAllProducts()
+        {
+            try
+            {
+                _logger.LogInformation("Initiating flow to get all Products from db");
+                var productsData = _dbAccess.ExecuteQuery(
+                    @"SELECT ProductId, Name, Description, Category, Price, Stock,
+                    ProductGuid, CreatedAt, UpdatedAt
+                    FROM Products
+                    ORDER BY Name"
+                );
+
+                if (productsData.Rows.Count == 0)
+                {
+                    _logger.LogWarning("No products were returned");
+                    return null;
+                }
+
+                _logger.LogInformation("Got {numberOfProducts} from db", productsData.Rows.Count);
+
+                return productsData;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while getting products from DB!");
+                throw;
+            }
+        }
+
         public DataTable GetProductData(int productId)
         {
             try
