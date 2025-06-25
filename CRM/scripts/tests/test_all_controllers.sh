@@ -7,6 +7,7 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+TESTCOUNTER=1
 
 # Global JWT token variable
 JWT_TOKEN=""
@@ -175,7 +176,8 @@ if ! authenticate; then
 fi
 
 # Test 1: User Controller - Get User by Email (now authenticated)
-echo "1. Testing GET /api/User/email/testuser@example.com"
+echo "${TESTCOUNTER}. Testing GET /api/User/email/testuser@example.com"
+((TESTCOUNTER++))
 USER_RESPONSE=$(run_curl GET "$BASE_URL/User/email/testuser@example.com")
 USER_STATUS=$?
 
@@ -193,7 +195,8 @@ echo
 
 # Test 2: User Controller - Get User by ID (if we have one)
 if [ -n "$USER_ID" ] && [ "$USER_ID" -gt 0 ]; then
-    echo "2. Testing GET /api/User/$USER_ID"
+    echo "${TESTCOUNTER}. Testing GET /api/User/$USER_ID"
+    ((TESTCOUNTER++))
     GET_USER_RESPONSE=$(run_curl GET "$BASE_URL/User/$USER_ID")
     GET_USER_STATUS=$?
     
@@ -209,8 +212,25 @@ else
 fi
 echo
 
+# Testing getting all products from the controller
+echo "${TESTCOUNTER}. GET /api/product"
+GET_ALL_PRODUCTS_RESPONSE=$(run_curl GET "$BASE_URL/product")
+
+
+GET_ALL_PRODUCTS_STATUS=$?
+if [ $GET_ALL_PRODUCTS_STATUS -eq 0 ]; then
+    print_status 0 "Products retrieved successfully"
+    # Printing all produts retrieved from DB
+    echo $GET_ALL_PRODUCTS_RESPONSE
+else
+    print_status 1 "Failed to get all products"
+    echo "Response: $GET_ALL_PRODUCTS_STATUS"
+fi
+echo
+
 # Test 3: Product Controller - Add Product
-echo "3. Testing POST /api/product/add"
+echo "${TESTCOUNTER}. POST /api/product/add"
+((TESTCOUNTER++))
 PRODUCT_RESPONSE=$(run_curl POST "$BASE_URL/product/add" '{
     "name": "Test Product",
     "description": "Test product description",
@@ -234,7 +254,8 @@ echo
 
 # Test 4: Product Controller - Get Product
 if [ -n "$PRODUCT_ID" ] && [ "$PRODUCT_ID" -gt 0 ]; then
-    echo "4. Testing GET /api/product/$PRODUCT_ID"
+    echo "${TESTCOUNTER}. /api/product/$PRODUCT_ID"
+    ((TESTCOUNTER++))
     GET_PRODUCT_RESPONSE=$(run_curl GET "$BASE_URL/product/$PRODUCT_ID")
     GET_PRODUCT_STATUS=$?
     
@@ -252,8 +273,8 @@ echo
 
 # Test 5: Cart Controller - Add Item to Cart
 if [ -n "$USER_ID" ] && [ -n "$PRODUCT_ID" ] && [ "$USER_ID" -gt 0 ] && [ "$PRODUCT_ID" -gt 0 ]; then
-    echo "5. Testing POST /api/cart/add"
-    
+    echo "${TESTCOUNTER}. /api/cart/add"
+    ((TESTCOUNTER++))
     CART_PAYLOAD="{\"userId\": $USER_ID, \"productId\": $PRODUCT_ID, \"quantity\": 2}"
     echo "Payload: $CART_PAYLOAD"
     
@@ -275,7 +296,8 @@ echo
 
 # Test 6: Cart Controller - Get Cart
 if [ -n "$USER_ID" ] && [ "$USER_ID" -gt 0 ]; then
-    echo "6. Testing GET /api/cart/$USER_ID"
+    echo "${TESTCOUNTER}. Testing GET /api/cart/$USER_ID"
+    ((TESTCOUNTER++))
     GET_CART_RESPONSE=$(run_curl GET "$BASE_URL/cart/$USER_ID")
     GET_CART_STATUS=$?
     
@@ -293,8 +315,8 @@ echo
 
 # Test 7: Order Controller - Create Order
 if [ -n "$USER_ID" ] && [ -n "$PRODUCT_ID" ] && [ "$USER_ID" -gt 0 ] && [ "$PRODUCT_ID" -gt 0 ]; then
-    echo "7. Testing POST /api/Order"
-    
+    echo "${TESTCOUNTER}. Testing POST /api/Order"
+    ((TESTCOUNTER++))
     ORDER_PAYLOAD="{
         \"userNameOrder\": \"testuser@example.com\",
         \"customerId\": $USER_ID,
@@ -328,7 +350,8 @@ echo
 
 # Test 8: Order Controller - Get Order
 if [ -n "$ORDER_GUID" ]; then
-    echo "8. Testing GET /api/Order/$ORDER_GUID"
+    echo "${TESTCOUNTER}. Testing GET /api/Order/$ORDER_GUID"
+    ((TESTCOUNTER++))
     GET_ORDER_RESPONSE=$(run_curl GET "$BASE_URL/Order/$ORDER_GUID")
     GET_ORDER_STATUS=$?
     
@@ -346,7 +369,8 @@ echo
 
 # Test 9: Order Controller - Get Orders by Customer
 if [ -n "$USER_ID" ] && [ "$USER_ID" -gt 0 ]; then
-    echo "9. Testing GET /api/Order/customer/$USER_ID"
+    echo "${TESTCOUNTER}. Testing GET /api/Order/customer/$USER_ID"
+    ((TESTCOUNTER++))
     GET_ORDERS_RESPONSE=$(run_curl GET "$BASE_URL/Order/customer/$USER_ID")
     GET_ORDERS_STATUS=$?
     
@@ -363,7 +387,8 @@ fi
 echo
 
 # Test 10: Authentication - Test Logout
-echo "10. Testing POST /api/auth/logout"
+echo "${TESTCOUNTER}. Testing POST /api/auth/logout"
+((TESTCOUNTER++))
 LOGOUT_RESPONSE=$(run_curl POST "$BASE_URL/auth/logout" "")
 LOGOUT_STATUS=$?
 
@@ -373,7 +398,8 @@ if [ $LOGOUT_STATUS -eq 0 ]; then
     
     # Test 11: Verify token is blacklisted
     echo ""
-    echo "11. Testing token blacklist (should fail with 401)"
+    echo "${TESTCOUNTER}. Testing token blacklist (should fail with 401)"
+    ((TESTCOUNTER++))
     BLACKLIST_TEST_RESPONSE=$(run_curl GET "$BASE_URL/User/email/testuser@example.com")
     BLACKLIST_TEST_STATUS=$?
     
