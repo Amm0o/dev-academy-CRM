@@ -5,6 +5,7 @@ namespace CRM.Models
         public int CartItemId { get; private set; }
         public int CartId { get; set; }
         public int ProductId { get; set; }
+        public string ProductName { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
 
@@ -12,7 +13,7 @@ namespace CRM.Models
 
         // Constructor for creating new CartItems
 
-        public CartItems(int cartId, int productId, int quantity, decimal unitPrice)
+        public CartItems(int cartId, int productId, int quantity, decimal unitPrice, string productName = null)
         {
             if (cartId <= 0)
                 throw new ArgumentException("CartId must be positive", nameof(cartId));
@@ -30,6 +31,7 @@ namespace CRM.Models
             ProductId = productId;
             Quantity = quantity;
             UnitPrice = unitPrice;
+            ProductName = productName;
 
         }
 

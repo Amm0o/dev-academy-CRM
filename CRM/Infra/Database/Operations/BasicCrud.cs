@@ -439,7 +439,8 @@ namespace CRM.Infra
                         cartId,
                         Convert.ToInt32(item["ProductId"]),
                         Convert.ToInt32(item["Quantity"]),
-                        Convert.ToInt32(item["UnitPrice"])
+                        Convert.ToInt32(item["UnitPrice"]),
+                        item["ProductName"].ToString()
                     ));
                 }
 
