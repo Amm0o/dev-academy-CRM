@@ -42,28 +42,30 @@ namespace CRM.Controllers
                     return StatusCode(404, "No products were found!");
                 }
 
-                var productsParsed = new List<object>();
-                foreach (DataRow product in allProducts.Rows)
+                // Convert product dataRow to Product model
+                var products = new List<Product>();
+                foreach (DataRow row in allProducts.Rows)
                 {
-                    productsParsed.Add(new
+                    try
                     {
-                        ProductId = Convert.ToInt32(product["ProductId"]),
-                        ProductName = product["Name"].ToString(),
-                        ProductDescription = product["Description"].ToString(),
-                        ProdcutCategory = product["Category"].ToString(),
-                        ProductPrice = Convert.ToDecimal(product["Price"]),
-                        ProductStock = Convert.ToInt32(product["Stock"]),
-                        ProductGuid = Guid.Parse(product["ProductGuid"].ToString()),
-                        CreatedAt = Convert.ToDateTime(product["CreatedAt"]),
-                        UpdatedAt = Convert.ToDateTime(product["UpdatedAt"]),
-                    });
+                        var product = Product.FromDatabase(row);
+                        products.Add(product);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to parse product from DataRow to Product Model");
+                        return BadRequest("Failed to parse product");
+                    }
                 }
 
-                _logger.LogInformation("Successfuly got all Producrs from DB and parsed it sending to client");
+                // Convert to products API response
+                var productsResponse = products.Select(p => p.ToApiResponse()).ToList();
+
+                _logger.LogInformation("Successfully got all products from DB and parse it to user model");
                 return Ok(new
                 {
-                    Message = "Successfully got all products from DB",
-                    Data = productsParsed 
+                    message = "Successfully got all the products from DB and parsed them",
+                   data = productsResponse 
                 });
 
             }
@@ -91,21 +93,21 @@ namespace CRM.Controllers
                     return NotFound($"Product {productId} was not found in db");
                 }
 
-                // Convert data table to object
-                var row = _basicCrud.GetProductData(productId);
-                var productRow = row.Rows[0];
 
-                var product = new
+                // Get product data and convert to Product model
+                var productData = _basicCrud.GetProductData(productId);
+                
+                if (productData.Rows.Count == 0)
                 {
-                    ProductId = Convert.ToInt32(productRow["ProductId"]),
-                    ProductName = productRow["Name"].ToString(),
-                    ProductPrice = Convert.ToDecimal(productRow["Price"]),
-                    ProductStock = Convert.ToInt32(productRow["Stock"]),
-                    UpdatedAt = Convert.ToDateTime(productRow["UpdatedAt"]),
-                    CreatedAt = Convert.ToDateTime(productRow["CreatedAt"])
-                };
+                    _logger.LogError("No data returned for product {pId}", productId);
+                    return NotFound($"Product {productId} was not found");
+                }
 
-                return Ok(product);
+                var productRow = productData.Rows[0];
+                var product = Product.FromDatabase(productRow);
+
+                _logger.LogInformation("Retrieved product {name} from db", product.ProductName);
+                return Ok(product.ToApiResponse());
             }
             catch (Exception ex)
             {
@@ -150,6 +152,8 @@ namespace CRM.Controllers
                     return StatusCode(500, "Failed to retrieve product ID");
                 }
 
+                product.Id = productId;
+
                 return Ok(new
                 {
                     Message = "Product created successfully",
@@ -180,28 +184,44 @@ namespace CRM.Controllers
                     return StatusCode(500, "Data provided was invalid for product update");
                 }
 
-                var product = Product.CreateNew(
+                // Check if product exists
+                if (!_basicCrud.CheckIfProductExists(productId))
+                {
+                    _logger.LogWarning("Trying to update product {id} failed because it does not exist");
+                    return NotFound($"Product with {productId} was not update because it does not exist in db!");
+                }
+
+                // Get existing GUID to preserve it
+                var existingData = _basicCrud.GetProductData(productId);
+                var existingRow = existingData.Rows[0];
+                var existingGuid = Guid.Parse(existingRow["ProductGuid"]?.ToString() ?? Guid.NewGuid().ToString());
+
+                // Create updated product with existing GUID
+                var product = new Product(
                     request.Name,
                     request.Description,
-                    request.Category,
                     request.Price,
-                    request.Stock
+                    request.Stock,
+                    request.Category,
+                    existingGuid
                 );
 
+                product.Id = productId;
 
                 bool success = _basicCrud.UpdateProduct(product, productId);
 
                 if (!success)
                 {
-                    _logger.LogError("Failed to update product {name} - {id}", product.ProductName, productId);
-                    return StatusCode(500, $"Failed to update product {product.ProductName} - {productId}");
+                    _logger.LogCritical("Failed to update product with id {id}, with new data {product}", productId, product);
+                    return BadRequest("Failed to update product");
                 }
+
 
                 _logger.LogInformation("Updated product sucessfully: {name} - {id}", product.ProductName, productId);
                 return Ok(new
                 {
-                    Message = "Updated product successfully",
-                    NewProduct = product
+                    message = "Updated product successfully",
+                    data = product
                 });
 
             }

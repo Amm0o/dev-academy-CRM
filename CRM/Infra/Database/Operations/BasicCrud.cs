@@ -116,7 +116,7 @@ namespace CRM.Infra
             try
             {
                 var productData = _dbAccess.ExecuteQuery(
-                    "SELECT ProductId, Name, Price, Stock, CreatedAt, UpdatedAt FROM Products WHERE ProductId = @ProductId",
+                    "SELECT ProductId, Name, Description, Category,Price, Stock, ProductGuid, CreatedAt, UpdatedAt FROM Products WHERE ProductId = @ProductId",
                     new SqlParameter("@ProductId", productId)
                 );
 

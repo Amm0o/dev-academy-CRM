@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using System.Data;
 
 namespace CRM.Models;
 
@@ -78,10 +79,12 @@ public sealed class Product : Entity
     }
 
     public DateTime ProductUpdateTime => _productUpdateTime;
+    public DateTime ProductCreateTime { get; private set; }
     public Guid ProductGuid { get; private set; }
+    
 
     [SetsRequiredMembers]
-    public Product(string productName, string productDescription, double productPrice, int productQuantity, string productCategory, Guid? productGiud = null)
+    public Product(string productName, string productDescription, double productPrice, int productQuantity, string productCategory, Guid? productGuid = null)
     {
         ProductName = productName;
         ProductDescription = productDescription;
@@ -89,10 +92,11 @@ public sealed class Product : Entity
         ProductQuantity = productQuantity;
         ProductCategory = productCategory;
         _productUpdateTime = DateTime.UtcNow;
-        ProductGuid = Guid.NewGuid();
+        ProductGuid = productGuid ?? Guid.NewGuid(); // If no guid passed in create one
     }
-    
 
+
+    // Factory method for creating new products
     public static Product CreateNew(string name, string description, string category, double price, int stock)
     {
         return new Product(
@@ -100,8 +104,62 @@ public sealed class Product : Entity
             description,
             price,
             stock,
-            category,
-            Guid.NewGuid()
+            category
         );
+    }
+
+    // Create from database data
+    public static Product FromDatabase(DataRow row)
+    {
+        return new Product(
+            row["Name"].ToString(),
+            row["Description"].ToString(),
+            Convert.ToDouble(row["Price"]),
+            Convert.ToInt32(row["Stock"]),
+            row["Category"].ToString(),
+            Guid.Parse(row["ProductGuid"].ToString())
+        )
+        {
+            Id = Convert.ToInt32(row["ProductId"]),
+            ProductCreateTime = Convert.ToDateTime(row["CreatedAt"]),
+            _productUpdateTime = Convert.ToDateTime(row["UpdatedAt"])
+        };
+    }
+
+    // Convert to anonymous object for API response
+    public object ToApiResponse()
+    {
+        return new
+        {
+            ProductId = Id,
+            ProductName = ProductName,
+            ProductDescription = ProductDescription,
+            ProductCategory = ProductCategory,
+            ProductPrice = ProductPrice,
+            ProductStock = ProductQuantity,
+            ProductGuid = ProductGuid,
+            CreatedAt = ProductCreateTime,
+            UpdatedAt = ProductUpdateTime
+        };
+    }
+
+    // Update product details 
+    public void UpdateDetails (string name, string description, string category, double price, int stock)
+    {
+        ProductName = name;
+        ProductDescription = description;
+        ProductCategory = category;
+        ProductPrice = price;
+        ProductQuantity = stock;
+        _productUpdateTime = DateTime.UtcNow;
+    }
+
+    public static List<string> getCategories(string categories)
+    {
+        // If categories is empty return empty list
+        if (string.IsNullOrWhiteSpace(categories))
+            return new List<string>();
+
+        return categories.Split(",").Select(cat => cat.Trim()).Where(cat => !string.IsNullOrWhiteSpace(cat)).ToList();
     }
 }
