@@ -248,6 +248,55 @@ namespace CRM.Controllers {
                 return StatusCode(500, $"Unexpected error occured while retrieving user with email {email}");
             }
         }
+
+        [HttpGet("list-all-users")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult ListAllUsers()
+        {
+            try
+            {
+                _logger.LogInformation("Received request to list all users");
+
+                List<User> users = _basicCrud.GetAllUsers();
+
+                // Check if we got users from db
+                if (users == null)
+                {
+                    _logger.LogWarning("No users were returned from db");
+                    return NotFound(new
+                    {
+                        Message = "No users were returned from db"
+                    });
+                }
+
+                _logger.LogInformation("Got users from db! Count: {count}", users.Count);
+
+                // Now strip passoword hash
+                var safeUsers = users.Select(u => new
+                {
+                    userId = u.Id,
+                    name = u.Name,
+                    email = u.Email,
+                    role = u.Role.ToString(),
+                    createdAt = u.UserCreateTime
+                });
+
+                return Ok(new
+                {
+                    message = "Successfully returned all users from db",
+                    data = safeUsers
+                });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Unexpected error occurred while listing all users from db");
+                return BadRequest(new
+                {
+                    message = "Unexpected error occured while list all users from db"
+                });
+            }
+        }
         
     }
 }

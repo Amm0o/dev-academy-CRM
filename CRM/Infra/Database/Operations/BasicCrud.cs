@@ -1002,5 +1002,58 @@ namespace CRM.Infra
                 throw;
             }
         }
+
+        public List<User> GetAllUsers()
+        {
+            try
+            {
+                _logger.LogInformation("Initiating flow to get all user from db!");
+                var users = _dbAccess.ExecuteQuery(@"Select UserId, Name, Email, PasswordHash, Role, CreatedAt FROM Users");
+
+                // Check if we have users in db to return
+                if (users.Rows.Count == 0)
+                {
+                    _logger.LogWarning("No users found in db");
+                    return new List<User>();
+                }
+
+                List<User> listOfUsers = new List<User>();
+
+                // Parse user role 
+
+                foreach (DataRow row in users.Rows)
+                {
+
+                    // Parse role - assuming it's stored as string in DB
+                    UserRole role = UserRole.Regular; // Default value
+                    if (row["Role"] != null && row["Role"] != DBNull.Value)
+                    {
+                        string roleString = row["Role"].ToString();
+                        if (Enum.TryParse<UserRole>(roleString, true, out UserRole parsedRole))
+                        {
+                            role = parsedRole;
+                        }
+                    }
+                    var user = new User(
+                        id: Convert.ToInt32(row["UserId"]),
+                        name: row["Name"].ToString(),
+                        email: row["Email"].ToString(),
+                        password: row["PasswordHash"].ToString(),
+                        role = (UserRole)Enum.Parse(typeof(UserRole), row["Role"].ToString())
+                    );
+
+                    listOfUsers.Add(user);
+                }
+
+                _logger.LogInformation("Successfully retrieved n: {count} users from db", users.Rows.Count);
+                return listOfUsers;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Unexpected error occurered while getting all users from db");
+                throw;
+            }
+        }
     }
 }
