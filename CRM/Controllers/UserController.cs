@@ -297,6 +297,40 @@ namespace CRM.Controllers {
                 });
             }
         }
+
+        [HttpPost("demote/{email}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult DemoteUser(string email)
+        {
+            try
+            {
+                _logger.LogInformation("Received request to demote user {email}", email);
+
+                if (_basicCrud.DemoteUserFromAdmin(email))
+                {
+                    _logger.LogInformation("Successfully demoted user {email}", email);
+                    return Ok(new
+                    {
+                        message = $"Successfully demoted user {email}"
+                    });
+                }
+
+                _logger.LogError("Failed to demote user from db");
+                return BadRequest(new
+                {
+                    message = "Failed to demote user: " + email
+                });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Unexpected error occurred while demoting user {emaik}", email);
+                return BadRequest(new
+                {
+                    message = "Failed to demote user: " + email
+                });
+            }
+        }
         
     }
 }

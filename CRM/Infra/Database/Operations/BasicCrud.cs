@@ -1003,6 +1003,41 @@ namespace CRM.Infra
             }
         }
 
+        public bool DemoteUserFromAdmin(string email)
+        {
+            try
+            {
+                _logger.LogInformation("Initiating flow to demote user {email} from admin", email);
+
+                
+                // First check if user exists and is an admin
+                var userData = GetUserByEmail(email);
+                if (userData.Rows.Count == 0)
+                {
+                    _logger.LogWarning("User with email {email} not found", email);
+                    return false;
+                }
+
+                var currentRole = userData.Rows[0]["Role"].ToString();
+                if (currentRole != "Admin")
+                {
+                    _logger.LogWarning("User {email} is not an admin. Current role: {role}", email, currentRole);
+                    return false;
+                }
+
+                _dbAccess.ExecuteNonQuery(@"UPDATE Users SET Role = 'Regular' WHERE Email = @Email",
+                new SqlParameter("@Email", email));
+
+                _logger.LogInformation("Successfully demoted user {email}", email);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("Failed to demote user {email} from Admin");
+                throw;
+            }
+        }
+
         public List<User> GetAllUsers()
         {
             try
