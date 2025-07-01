@@ -1,5 +1,4 @@
 #!/bin/bash
-# filepath: /root/repos/dev-academy-CRM/CRM/scripts/db_setup.sh
 
 # Variables
 CONTAINER_NAME="crm_sql_server"
@@ -121,50 +120,217 @@ else
     echo "sqlcmd is already installed."
 fi
 
-# Step 8: Create the CRM database and tables
-echo "Setting up the CRM database and tables..."
+# Step 8: Create the CRM database
+echo "Creating the CRM database..."
 sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -Q "CREATE DATABASE $DB_NAME"
+
+# Step 9: Create all CRM tables (matching CreateDatabase.cs)
+echo "Setting up the CRM database tables..."
 sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
-    CREATE TABLE Customers (
-        CustomerID INT PRIMARY KEY IDENTITY(1,1),
-        FirstName NVARCHAR(50),
-        LastName NVARCHAR(50),
-        Email NVARCHAR(100),
-        Phone NVARCHAR(20),
-        CreatedDate DATETIME DEFAULT GETDATE()
-    );
-    INSERT INTO Customers (FirstName, LastName, Email, Phone) 
-    VALUES ('John', 'Doe', 'john.doe@example.com', '123-456-7890');
-    
-    CREATE TABLE TestTable (
-        TestID INT PRIMARY KEY IDENTITY(1,1),
-        TestData NVARCHAR(100)
-    );
-    INSERT INTO TestTable (TestData) 
-    VALUES ('Test Entry');
+    -- Create Users table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
+    BEGIN
+        CREATE TABLE Users (
+            UserId INT PRIMARY KEY IDENTITY(1,1),
+            Name NVARCHAR(100) NOT NULL,
+            Email NVARCHAR(100) NOT NULL UNIQUE,
+            PasswordHash NVARCHAR(255) NOT NULL,
+            Role NVARCHAR(255) NOT NULL,
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+        );
+        PRINT 'Users table created';
+    END
+    ELSE
+        PRINT 'Users table already exists';
 "
 
-# Step 9: Verify the setup
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Create Products table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Products')
+    BEGIN
+        CREATE TABLE Products (
+            ProductId INT PRIMARY KEY IDENTITY(1,1),
+            Name NVARCHAR(100) NOT NULL,
+            Description NVARCHAR(500),
+            Category NVARCHAR(50),
+            Price DECIMAL(18,2) NOT NULL,
+            Stock INT NOT NULL DEFAULT 0,
+            ProductGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+        );
+        PRINT 'Products table created';
+    END
+    ELSE
+        PRINT 'Products table already exists';
+"
+
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Create Orders table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Orders')
+    BEGIN
+        CREATE TABLE Orders (
+            OrderId INT PRIMARY KEY IDENTITY(1,1),
+            OrderGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+            UserId INT NOT NULL,
+            UserNameOrder NVARCHAR(100) NOT NULL,
+            OrderDescription NVARCHAR(500),
+            OrderDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+            Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+            TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            CONSTRAINT FK_Orders_Users FOREIGN KEY (UserId) 
+                REFERENCES Users(UserId)
+        );
+        
+        CREATE INDEX IX_Orders_OrderGuid ON Orders(OrderGuid);
+        PRINT 'Orders table created';
+    END
+    ELSE
+        PRINT 'Orders table already exists';
+"
+
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Create OrderItems table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'OrderItems')
+    BEGIN
+        CREATE TABLE OrderItems (
+            OrderItemId INT PRIMARY KEY IDENTITY(1,1),
+            OrderId INT NOT NULL,
+            ProductId INT NOT NULL,
+            Quantity INT NOT NULL,
+            UnitPrice DECIMAL(18,2) NOT NULL,
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) 
+                REFERENCES Orders(OrderId),
+            CONSTRAINT FK_OrderItems_Products FOREIGN KEY (ProductId) 
+                REFERENCES Products(ProductId)
+        );
+        PRINT 'OrderItems table created';
+    END
+    ELSE
+        PRINT 'OrderItems table already exists';
+"
+
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Create Carts table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Carts')
+    BEGIN
+        CREATE TABLE Carts (
+            CartId INT PRIMARY KEY IDENTITY(1,1),
+            UserId INT NOT NULL UNIQUE,
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            CONSTRAINT FK_Carts_Users FOREIGN KEY (UserId)
+                REFERENCES Users(UserId)
+        );
+        PRINT 'Carts table created';
+    END
+    ELSE
+        PRINT 'Carts table already exists';
+"
+
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Create CartItems table
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CartItems')
+    BEGIN
+        CREATE TABLE CartItems (
+            CartItemId INT PRIMARY KEY IDENTITY(1,1),
+            CartId INT NOT NULL,
+            ProductId INT NOT NULL,
+            Quantity INT NOT NULL DEFAULT 1,
+            UnitPrice DECIMAL(18,2) NOT NULL,
+            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+            CONSTRAINT FK_CartItems_Carts FOREIGN KEY (CartId) 
+                REFERENCES Carts(CartId),
+            CONSTRAINT FK_CartItems_Products FOREIGN KEY (ProductId) 
+                REFERENCES Products(ProductId)
+        );
+        PRINT 'CartItems table created';
+    END
+    ELSE
+        PRINT 'CartItems table already exists';
+"
+
+# Step 10: Create initial admin user (matching appsettings.json)
+echo "Creating initial admin user..."
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Insert admin user if not exists
+    IF NOT EXISTS (SELECT * FROM Users WHERE Email = 'admin@crm.com')
+    BEGIN
+        INSERT INTO Users (Name, Email, PasswordHash, Role, CreatedAt)
+        VALUES (
+            'System Admin', 
+            'admin@crm.com', 
+            '\$2a\$11\$placeholder.hash.for.StrongPassword123', 
+            'Admin', 
+            GETDATE()
+        );
+        PRINT 'Admin user created - Email: admin@crm.com';
+        PRINT 'Note: Update password hash using your application';
+    END
+    ELSE
+        PRINT 'Admin user already exists';
+"
+
+# Step 11: Insert sample data
+echo "Inserting sample data..."
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    -- Insert sample products
+    IF NOT EXISTS (SELECT * FROM Products WHERE Name = 'Sample Product 1')
+    BEGIN
+        INSERT INTO Products (Name, Description, Category, Price, Stock, CreatedAt, UpdatedAt)
+        VALUES 
+            ('Sample Product 1', 'A great product for testing', 'Electronics', 99.99, 50, GETDATE(), GETDATE()),
+            ('Sample Product 2', 'Another awesome product', 'Clothing', 49.99, 25, GETDATE(), GETDATE()),
+            ('Sample Product 3', 'Premium quality item', 'Home & Garden', 149.99, 10, GETDATE(), GETDATE());
+        PRINT 'Sample products created';
+    END
+    ELSE
+        PRINT 'Sample products already exist';
+"
+
+# Step 12: Verify the setup
 echo "Verifying the setup..."
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "SELECT * FROM Customers"
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "SELECT * FROM TestTable"
+sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "
+    PRINT 'Database Tables:';
+    SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';
+    
+    PRINT 'Users Count:';
+    SELECT COUNT(*) as UserCount FROM Users;
+    
+    PRINT 'Products Count:';
+    SELECT COUNT(*) as ProductCount FROM Products;
+"
+
 if [ $? -ne 0 ]; then
     echo "Error: Failed to verify the setup. Check the database connection."
     exit 1
 fi
-echo "Setup verified successfully!"
-# Clean up test table
-echo "Cleaning up test table..."
-sqlcmd -S localhost,$PORT -U SA -P "$SA_PASSWORD" -C -d $DB_NAME -Q "DROP TABLE TestTable"
 
-# Step 10: Display connection details
-echo "Setup complete! Your SQL Server is running in a Docker container."
+echo "Setup verified successfully!"
+
+# Step 13: Display connection details
+echo "========================================="
+echo "CRM Database Setup Complete!"
+echo "========================================="
 echo "Connection details:"
 echo "  Host: localhost"
 echo "  Port: $PORT"
 echo "  Database: $DB_NAME"
 echo "  Username: SA"
 echo "  Password: $SA_PASSWORD"
-echo "To connect from your CRM app, use: Server=localhost,$PORT;Database=$DB_NAME;User Id=SA;Password=$SA_PASSWORD;"
-echo "To stop the container: docker stop $CONTAINER_NAME"
-echo "To start it again later: docker start $CONTAINER_NAME"
+echo ""
+echo "Connection String:"
+echo "  Server=localhost,$PORT;Database=$DB_NAME;User Id=SA;Password=$SA_PASSWORD;TrustServerCertificate=True;"
+echo ""
+echo "Admin User:"
+echo "  Email: admin@crm.com"
+echo "  Password: StrongPassword123 (update hash via application)"
+echo ""
+echo "Container Management:"
+echo "  Stop: docker stop $CONTAINER_NAME"
+echo "  Start: docker start $CONTAINER_NAME"
+echo "  Logs: docker logs $CONTAINER_NAME"
+echo "========================================="
