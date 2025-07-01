@@ -568,3 +568,7 @@
 /home/anoliveira/repos/dev-academy-CRM/CRM.Tests/obj/Debug/net8.0/CRM.Tests.pdb
 /home/anoliveira/repos/dev-academy-CRM/CRM.Tests/obj/Debug/net8.0/CRM.Tests.genruntimeconfig.cache
 /home/anoliveira/repos/dev-academy-CRM/CRM.Tests/obj/Debug/net8.0/ref/CRM.Tests.dll
+/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/bin/Debug/net8.0/BCrypt.Net-Next.dll
+/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/bin/Debug/net8.0/Castle.Core.dll
+/home/anoliveira/repos/dev-academy-CRM/CRM.Tests/bin/Debug/net8.0/Moq.dll

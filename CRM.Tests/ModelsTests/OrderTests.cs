@@ -5,21 +5,21 @@ namespace CRM.Tests.ModelsTests;
 
 public class OrderTests
 {
-
     string userNameOrder = "Jane Doe";
+    int customerId = 1;
     string orderDescription = "test description";
-    int stockQuantity = 2;
-    string productCategory = "Test Category";
+
     [Fact]
     public void Order_Constructor_ValidData_InitializesCorrectly()
     {
-        var order = new Order(userNameOrder, orderDescription, stockQuantity, productCategory);
+        // Based on the Order constructor: Order(string userNameOrder, int customerId, string orderDescription = "", Guid? orderGuid = null)
+        var order = new Order(userNameOrder, customerId, orderDescription);
 
         Assert.Equal(userNameOrder, order.UserNameOrder);
         Assert.Equal(orderDescription, order.OrderDescription);
-        Assert.Equal(stockQuantity, order.StockQuantity);
-        Assert.Equal(productCategory, order.ProductCategory);
+        Assert.Equal(customerId, order.CustomerId);
         Assert.True(order.OrderDate <= DateTime.UtcNow);
+        Assert.Equal(0m, order.TotalAmount); // Should be 0 initially as no items added
     }
 
     [Fact]
@@ -30,22 +30,37 @@ public class OrderTests
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            new Order(invalidUserNameOrder, orderDescription, stockQuantity, productCategory));
+            new Order(invalidUserNameOrder, customerId, orderDescription));
     }
 
     [Fact]
-    public void Constructor_InvalidStockQuantity_ThrowsArgumentException() {
-        int invalidSockQuantity = -1;
+    public void Constructor_InvalidCustomerId_ThrowsArgumentException() {
+        int invalidCustomerId = -1;
 
         Assert.Throws<ArgumentException>(() => 
-            new Order(userNameOrder, orderDescription, invalidSockQuantity, productCategory));
+            new Order(userNameOrder, invalidCustomerId, orderDescription));
     }
 
     [Fact]
-    public void Constructor_InvalidProductCategory_ThrowsArgumentException() {
-        string invalidProductCategory = "NA";
+    public void AddItem_ValidData_UpdatesTotalAmount() {
+        var order = new Order(userNameOrder, customerId, orderDescription);
+        
+        // Add an item
+        order.AddItem(1, 2, 10.50m);
+        
+        Assert.Equal(21.00m, order.TotalAmount);
+        Assert.Single(order.Items);
+    }
 
-        Assert.Throws<ArgumentException>(() => 
-            new Order(userNameOrder, orderDescription, stockQuantity, invalidProductCategory));
+    [Fact]
+    public void RemoveItem_ExistingProduct_RemovesSuccessfully() {
+        var order = new Order(userNameOrder, customerId, orderDescription);
+        order.AddItem(1, 2, 10.50m);
+        
+        bool result = order.RemoveItem(1);
+        
+        Assert.True(result);
+        Assert.Empty(order.Items);
+        Assert.Equal(0m, order.TotalAmount);
     }
 }
