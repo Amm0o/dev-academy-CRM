@@ -822,7 +822,7 @@ namespace CRM.Infra
                 _logger?.LogInformation("Retrieving user data for email: {Email}", email);
 
                 var userData = _dbAccess.ExecuteQuery(
-                    @"SELECT UserId, Name, Email, PasswordHash, Role, UserCreateTime, UserUpdateTime 
+                    @"SELECT UserId, Name, Email, PasswordHash, Role, CreatedAt
                     FROM Users 
                     WHERE Email = @Email",
                     new SqlParameter("@Email", email)
@@ -852,7 +852,7 @@ namespace CRM.Infra
                 _logger?.LogInformation("Retrieving user data for ID: {UserId}", userId);
 
                 var userData = _dbAccess.ExecuteQuery(
-                    @"SELECT UserId, Name, Email, PasswordHash, Role, UserCreateTime, UserUpdateTime 
+                    @"SELECT UserId, Name, Email, PasswordHash, Role, CreatedAt
                     FROM Users 
                     WHERE UserId = @UserId",
                     new SqlParameter("@UserId", userId)
@@ -904,16 +904,10 @@ namespace CRM.Infra
 
                 // Parse timestamps if they exist
                 DateTime? createTime = null;
-                DateTime? updateTime = null;
 
-                if (userRow["UserCreateTime"] != null && userRow["UserCreateTime"] != DBNull.Value)
+                if (userRow["CreatedAt"] != null && userRow["CreatedAt"] != DBNull.Value)
                 {
-                    createTime = Convert.ToDateTime(userRow["UserCreateTime"]);
-                }
-
-                if (userRow["UserUpdateTime"] != null && userRow["UserUpdateTime"] != DBNull.Value)
-                {
-                    updateTime = Convert.ToDateTime(userRow["UserUpdateTime"]);
+                    createTime = Convert.ToDateTime(userRow["CreatedAt"]);
                 }
 
                 // Create User object
