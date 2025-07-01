@@ -309,6 +309,22 @@ CREATE TABLE CartItems (
 
 ## 🏃 Running the Application
 
+### Setup env to run the app
+```bash
+CRM/scripts/setup_dev_env.sh
+```
+
+### Setup docker container to run the db
+```bash
+CRM/scripts/db_setup.sh
+```
+
+### Install dependencies
+```bash
+cd CRM
+dotnet restore
+```
+
 ### Development Mode
 ```bash
 cd CRM
