@@ -5,6 +5,39 @@
 > **Try the application now!** Full-featured CRM with React + TypeScript
 
 
+## ⚠️ **SECURITY DISCLAIMER**
+
+> **🔒 DEVELOPMENT & TESTING PURPOSES ONLY**
+>
+> This repository contains **hardcoded passwords and secrets** in configuration files and scripts for **ease of testing and evaluation**. This allows users to quickly get the project running using the provided setup scripts without additional configuration.
+>
+> ### 📋 **Default Credentials & Secrets:**
+> - **Database Password**: `YourStrong@Passw0rd123!`
+> - **Admin User**: `admin@crm.com` / `StrongPassword123`
+> - **JWT Secret**: `YourSuperSecretKeyThatIsAtLeast32CharactersLong`
+>
+> ### 🚨 **PRODUCTION WARNING:**
+> **NEVER use these default credentials in production environments!**
+>
+> **Before deploying to production:**
+> - [ ] Change all default passwords
+> - [ ] Generate new JWT secret keys
+> - [ ] Use environment variables for sensitive data
+> - [ ] Enable HTTPS/TLS encryption
+> - [ ] Implement proper secret management (Azure Key Vault, etc.)
+> - [ ] Review and update CORS policies
+> - [ ] Enable database encryption
+>
+> ### 🛡️ **Recommended Production Security:**
+> ```bash
+> # Use environment variables instead of hardcoded values
+> export DB_PASSWORD="your-secure-database-password"
+> export JWT_SECRET="your-256-bit-jwt-secret-key"
+> export ADMIN_PASSWORD="your-secure-admin-password"
+> ```
+>
+> **This project is intended for educational and demonstration purposes.**
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Architecture](#architecture)
