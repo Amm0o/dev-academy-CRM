@@ -282,25 +282,27 @@ CREATE TABLE CartItems (
 ### appsettings.json
 ```json
 {
-  "ConnectionString": {
-    "SqlServer": "Server=localhost,1433;Database=CRM;User Id=SA;Password=YourStrong@Passw0rd123!;TrustServerCertificate=True",
-    "DatabaseName": "CRM"
-  },
-  "Jwt": {
-    "SecretKey": "your-very-long-secret-key-at-least-32-characters",
-    "Issuer": "CRM-API",
-    "Audience": "CRM-Client",
-    "ExpirationMinutes": 60
-  },
   "Logging": {
+    "minimumLogLevel": "Debug",
     "LogLevel": {
       "Default": "Information",
       "Microsoft.AspNetCore": "Warning"
-    },
-    "FilePath": "Logs/CRM_Logs.txt"
+    }
   },
-  "CORS": {
-    "AllowedOrigins": ["http://localhost:3000", "http://localhost:3001"]
+  "AllowedHosts": "*",
+  "ConnectionString": {
+    "SqlServer": "Server=localhost,1433;Database=CRM;User Id=SA;Password=YourStrong@Passw0rd123!;TrustServerCertificate=True;Max Pool Size=100;Min Pool Size=5;"
+  },
+  "Jwt": {
+    "SecretKey": "YourSuperSecretKeyThatIsAtLeast32CharactersLong",
+    "Issuer": "CRM-API",
+    "Audience": "CRM-Users",
+    "ExpiryInMinutes": 60
+  },
+  "AdminUser" : {
+    "Email": "admin@crm.com",
+    "Password": "StrongPassword123",
+    "Name": "System Admin"
   }
 }
 ```
