@@ -159,9 +159,15 @@ dotnet --version
 docker --version
 ```
 
+### 3. Run setup env script
+```bash
+# The bellow script works for Ubuntu and Arch
+cd CRM/scripts/setup_dev_env.sh
+``` 
+
 ## 🗄️ Database Setup
 
-### Option 1: Automated Setup (Recommended)
+### Automated Setup
 ```bash
 cd scripts
 sudo ./db_setup.sh
@@ -178,57 +184,17 @@ This script will:
 8. Create stored procedures
 9. Seed initial admin user
 
-### Option 2: Manual Setup
-
-#### Step 1: Start SQL Server Container
-```bash
-# Create Docker volume for data persistence
-sudo docker volume create mssql-data
-
-# Run SQL Server container
-sudo docker run -d \
-  --name crm_sql_server \
-  -e "ACCEPT_EULA=Y" \
-  -e "MSSQL_SA_PASSWORD=YourStrong@Passw0rd123!" \
-  -e "MSSQL_PID=Express" \
-  -p 1433:1433 \
-  -v mssql-data:/var/opt/mssql \
-  mcr.microsoft.com/mssql/server:2022-latest
-```
-
-#### Step 2: Create Database
-```bash
-# Connect to SQL Server
-docker exec -it crm_sql_server /opt/mssql-tools/bin/sqlcmd \
-  -S localhost -U SA -P "YourStrong@Passw0rd123!"
-
-# Create database
-CREATE DATABASE CRM;
-GO
-USE CRM;
-GO
-```
-
-#### Step 3: Run SQL Scripts
-Execute scripts in order:
-1. `scripts/sql/01_create_tables.sql`
-2. `scripts/sql/02_create_indexes.sql`
-3. `scripts/sql/03_create_procedures.sql`
-4. `scripts/sql/04_seed_data.sql`
-
 ### Database Schema
 
 #### Users Table
 ```sql
 CREATE TABLE Users (
-    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT PRIMARY KEY IDENTITY(1,1),
     Name NVARCHAR(100) NOT NULL,
-    Email NVARCHAR(255) UNIQUE NOT NULL,
+    Email NVARCHAR(100) NOT NULL UNIQUE,
     PasswordHash NVARCHAR(255) NOT NULL,
-    Role NVARCHAR(50) DEFAULT 'Regular',
-    CreatedDate DATETIME DEFAULT GETDATE(),
-    LastLoginDate DATETIME,
-    IsActive BIT DEFAULT 1
+    Role NVARCHAR(255) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
 );
 ```
 
@@ -236,15 +202,14 @@ CREATE TABLE Users (
 ```sql
 CREATE TABLE Products (
     ProductId INT PRIMARY KEY IDENTITY(1,1),
-    Name NVARCHAR(255) NOT NULL,
-    Description NVARCHAR(MAX),
-    Category NVARCHAR(100),
-    Price DECIMAL(10,2) NOT NULL,
-    Stock INT DEFAULT 0,
-    ImageUrl NVARCHAR(500),
-    CreatedDate DATETIME DEFAULT GETDATE(),
-    UpdatedDate DATETIME,
-    IsActive BIT DEFAULT 1
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
+    Category NVARCHAR(50),
+    Price DECIMAL(18,2) NOT NULL,
+    Stock INT NOT NULL DEFAULT 0,
+    ProductGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
 );
 ```
 
@@ -252,13 +217,63 @@ CREATE TABLE Products (
 ```sql
 CREATE TABLE Orders (
     OrderId INT PRIMARY KEY IDENTITY(1,1),
-    UserId INT FOREIGN KEY REFERENCES Users(Id),
-    OrderDate DATETIME DEFAULT GETDATE(),
-    Status NVARCHAR(50) DEFAULT 'Pending',
-    TotalAmount DECIMAL(10,2),
-    ShippingAddress NVARCHAR(500),
-    PaymentMethod NVARCHAR(50),
-    TrackingNumber NVARCHAR(100)
+    OrderGuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    UserId INT NOT NULL,
+    UserNameOrder NVARCHAR(100) NOT NULL,
+    OrderDescription NVARCHAR(500),
+    OrderDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_Orders_Users FOREIGN KEY (UserId) 
+        REFERENCES Users(UserId)
+);
+
+CREATE INDEX IX_Orders_OrderGuid ON Orders(OrderGuid);
+```
+
+#### OrderItems Table
+```sql
+CREATE TABLE OrderItems (
+    OrderItemId INT PRIMARY KEY IDENTITY(1,1),
+    OrderId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(18,2) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) 
+        REFERENCES Orders(OrderId),
+    CONSTRAINT FK_OrderItems_Products FOREIGN KEY (ProductId) 
+        REFERENCES Products(ProductId)
+);
+```
+
+#### Carts Table
+```sql
+CREATE TABLE Carts (
+    CartId INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL UNIQUE,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_Carts_Users FOREIGN KEY (UserId)
+        REFERENCES Users(UserId)
+);
+```
+
+#### CartItems Table
+```sql
+CREATE TABLE CartItems (
+    CartItemId INT PRIMARY KEY IDENTITY(1,1),
+    CartId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Quantity INT NOT NULL DEFAULT 1,
+    UnitPrice DECIMAL(18,2) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_CartItems_Carts FOREIGN KEY (CartId) 
+        REFERENCES Carts(CartId),
+    CONSTRAINT FK_CartItems_Products FOREIGN KEY (ProductId) 
+        REFERENCES Products(ProductId)
 );
 ```
 
@@ -290,13 +305,6 @@ CREATE TABLE Orders (
 }
 ```
 
-### Environment Variables (Optional)
-```bash
-export CRM_DB_PASSWORD="YourStrong@Passw0rd123!"
-export CRM_JWT_SECRET="your-very-long-secret-key"
-export ASPNETCORE_ENVIRONMENT="Development"
-```
-
 ## 🏃 Running the Application
 
 ### Development Mode
@@ -318,121 +326,9 @@ dotnet run --configuration Release
 ### Access Points
 - API Base URL: `http://localhost:5205`
 - Swagger UI: `http://localhost:5205/swagger`
-- Health Check: `http://localhost:5205/health`
 
 ## 📡 API Documentation
-
-### Authentication
-
-#### Register New User
-```http
-POST /api/User/register
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePass123!",
-  "role": "Regular"
-}
-
-Response: 201 Created
-{
-  "message": "User registered successfully",
-  "userId": 123
-}
-```
-
-#### Login
-```http
-POST /api/Auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-
-Response: 200 OK
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 123,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "Regular"
-  }
-}
-```
-
-### Products
-
-#### Get All Products
-```http
-GET /api/product
-Authorization: Bearer {token}
-
-Response: 200 OK
-[
-  {
-    "productId": 1,
-    "name": "Product Name",
-    "description": "Description",
-    "category": "Electronics",
-    "price": 99.99,
-    "stock": 50
-  }
-]
-```
-
-#### Add Product (Admin Only)
-```http
-POST /api/product/add
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "New Product",
-  "description": "Product description",
-  "category": "Electronics",
-  "price": 149.99,
-  "stock": 25
-}
-```
-
-### Cart Operations
-
-#### Add to Cart
-```http
-POST /api/cart/add
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "productId": 1,
-  "quantity": 2
-}
-```
-
-#### Get Cart
-```http
-GET /api/cart
-Authorization: Bearer {token}
-```
-
-### Orders
-
-#### Create Order
-```http
-POST /api/order/create
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "shippingAddress": "123 Main St, City, Country",
-  "paymentMethod": "CreditCard"
-}
-```
+Available after running app: http://localhost:5205/swagger
 
 ## 🔐 Authentication & Authorization
 
